@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Input, Button, List, Typography, Card, Spin } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
+import { useRouter } from "next/navigation";
+import { generateUUID } from "@/app/utils/uuid";
 
 const { Title, Paragraph } = Typography;
 
@@ -13,14 +15,24 @@ interface Conversation {
   last_message?: string;
 }
 
-export default function SearchChat() {
-  const [query, setQuery] = useState("");
+export default function SearchChat({ directTo, prompt }: { directTo?: string, prompt?: string }) {
+  const [query, setQuery] = useState(prompt || "");
   const [conversations, setConversations] = useState<Conversation[]>();
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uuid] = useState(generateUUID());
+  const newDocId = uuid;
+  const router = useRouter();
+  
 
   useEffect(() => {        
+    if (directTo) return; // On search we're sending them to another page
+
+    if (query) {
+      handleSearch();
+    }
+
     // Fetch recent conversations (Replace with actual API call)
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`)
       .then((res) => res.json())
@@ -30,6 +42,10 @@ export default function SearchChat() {
 
   const handleSearch = async () => {
     if (!query.trim()) return;
+
+    if (directTo === 'docs') {
+      return router.push(`/docs/${newDocId}?p=${encodeURIComponent(query)}`);
+    }
 
     setResponse("");
     setLoading(true);
@@ -110,24 +126,7 @@ export default function SearchChat() {
           <Title level={4}>AI Response:</Title>
           <Paragraph style={{ whiteSpace: "pre-wrap" }}>{response}</Paragraph>
         </Card>
-      )}
-
-      {/* Recent Conversations */}
-      <div className={styles.recentConversations}>
-        <Title level={4}>Recent Conversations</Title>
-        <List
-          itemLayout="horizontal"
-          dataSource={conversations}
-          renderItem={(conv) => (
-            <List.Item>
-              <Card hoverable className={styles.conversationCard}>
-                <Paragraph strong>{conv.title}</Paragraph>
-                <Paragraph type="secondary">{conv.last_message}</Paragraph>
-              </Card>
-            </List.Item>
-          )}
-        />
-      </div>
+      )}      
     </div>
   );
 }
