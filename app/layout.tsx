@@ -1,4 +1,5 @@
 "use client";
+import '@ant-design/v5-patch-for-react-19';
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   useEffect(() => {
+    // TODO: Remove this when ready to work on auth
+    return
     if (!isLoading && !user && pathname !== "/login") {
       router.push("/login");
     }
