@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Menu theme="light" mode="inline" defaultSelectedKeys={["1"]} items={menuItems} />
 
           {/* Profile + Settings Dropup */}
-          <div style={{ position: "absolute", bottom: 16, width: "100%", textAlign: "center" }}>
+          <div style={{ position: "absolute", bottom: 30, width: "100%", textAlign: "center" }}>
             <Dropdown menu={profileMenu} placement="top">
               <div style={{ cursor: "pointer", padding: "10px" }}>
                 <Avatar style={{ backgroundColor: "#1890ff" }}>{user?.first_name?.charAt(0)}</Avatar>

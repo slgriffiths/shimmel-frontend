@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
-import { Input, Button, Typography, Spin, Upload } from "antd";
-import { SendOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { Input, Button, Typography } from "antd";
+import { SendOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 export default function SearchChat({ directTo, prompt }: { directTo?: string; prompt?: string }) {
   const [query, setQuery] = useState(prompt || "");  
