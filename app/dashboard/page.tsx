@@ -6,7 +6,7 @@ import SearchChat from "@/components/SearchChat/SearchChat";
 export default function DashboardPage() {
   return (    
     <>
-      <SearchChat directTo='docs' />
+      <SearchChat directTo='chat' />
       <RecentConversations />
       <ResearchCategories />
     </>

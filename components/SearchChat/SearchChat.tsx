@@ -1,50 +1,53 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input, Button, List, Typography, Card, Spin } from "antd";
-import { SearchOutlined, SendOutlined } from "@ant-design/icons";
+import { useState, useEffect, useRef } from "react";
+import { api } from "@/lib/api"; // Make sure this import is present
+import { Input, Button, Typography, Card, Spin, Upload } from "antd";
+import { SearchOutlined, SendOutlined, PaperClipOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
-import { useRouter } from "next/navigation";
-import { generateUUID } from "@/app/utils/uuid";
+import { useRouter, useParams } from "next/navigation";
 
 const { Title, Paragraph } = Typography;
 
-interface Conversation {
-  id: string;
-  title: string;
-  last_message?: string;
-}
-
 export default function SearchChat({ directTo, prompt }: { directTo?: string, prompt?: string }) {
-  const [query, setQuery] = useState(prompt || "");
-  const [conversations, setConversations] = useState<Conversation[]>();
+  const [query, setQuery] = useState(prompt || "");  
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [uuid] = useState(generateUUID());
-  const newDocId = uuid;
-  const router = useRouter();
-  
+  const [error, setError] = useState("");  
+  const [file, setFile] = useState<File | null>(null);      
+  const router = useRouter();  
+  const params = useParams();
+  const paramUuid = params?.uuid as string;    
+  const effectRan = useRef(false);
 
   useEffect(() => {        
-    if (directTo) return; // On search we're sending them to another page
+    if (effectRan.current) return;
+    effectRan.current = true;
+    
+    if (directTo) return;
 
     if (query) {
       handleSearch();
-    }
-
-    // Fetch recent conversations (Replace with actual API call)
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`)
-      .then((res) => res.json())
-      .then((data) => setConversations(Array.isArray(data) ? data : []))
-      .catch(() => setConversations([]));
+    }    
   }, []);  
 
-  const handleSearch = async () => {
+  const handleSearch = async () => {    
     if (!query.trim()) return;
 
-    if (directTo === 'docs') {
-      return router.push(`/docs/${newDocId}?p=${encodeURIComponent(query)}`);
+    if (directTo === 'chat') {
+      try {
+        const res = await api.post("conversations", {
+          title: query,
+        });
+    
+        const uuid = res.data.uuid || res.data.data?.uuid || res.data.id;
+    
+        return router.push(`/chat/${uuid}?p=${encodeURIComponent(query)}`);
+      } catch (err) {
+        console.error("Error creating conversation:", err);
+        setError("Something went wrong. Please try again.");
+        return;
+      }      
     }
 
     setResponse("");
@@ -52,13 +55,25 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
     setError("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: query }),
-      });
+      let res;
+
+      if (file) {
+        const formData = new FormData();
+        formData.append("conversation_id", paramUuid || "");
+        formData.append("prompt", query);
+        formData.append("file", file);
+
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: query, conversation_id: paramUuid }),
+        });
+      }
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -74,7 +89,6 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
           .filter(Boolean)
           .forEach((line) => {
             const data = line.replace(/^data:\s*/, "").trim();
-
             try {
               const parsed = JSON.parse(data);
 
@@ -111,14 +125,32 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onPressEnter={handleSearch}
-          suffix={<SearchOutlined className={styles.searchIcon} />}
+          suffix={
+            <>
+              <Upload
+                beforeUpload={(file) => {
+                  setFile(file);
+                  return false;
+                }}
+                showUploadList={false}
+              >
+                <PaperClipOutlined style={{ marginRight: 12 }} />
+              </Upload>
+              <SearchOutlined className={styles.searchIcon} />
+            </>
+          }
         />
         <Button type="primary" icon={<SendOutlined />} size="large" onClick={handleSearch} loading={loading}>
           {loading ? "Generating..." : "Go"}
         </Button>
       </div>
 
-      {/* Streaming Response Display */}
+      {file && (
+        <Paragraph type="secondary" style={{ marginTop: 8 }}>
+          Attached: {file.name}
+        </Paragraph>
+      )}
+
       {loading && <Spin />}
       {error && <Paragraph type="danger">{error}</Paragraph>}
       {response && (
@@ -126,7 +158,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
           <Title level={4}>AI Response:</Title>
           <Paragraph style={{ whiteSpace: "pre-wrap" }}>{response}</Paragraph>
         </Card>
-      )}      
+      )}
     </div>
   );
 }
