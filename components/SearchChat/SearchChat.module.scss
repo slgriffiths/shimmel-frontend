@@ -1,0 +1,36 @@
+.container {
+    padding: 24px;
+    max-width: 800px;
+    margin: auto;
+    text-align: center;
+  }
+  
+  .heading {
+    margin-bottom: 16px;
+  }
+  
+  .searchBox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  
+  .searchIcon {
+    color: rgba(0, 0, 0, 0.45);
+  }
+  
+  .recentConversations {
+    margin-top: 20px;
+    text-align: left;
+  }
+  
+  .conversationCard {
+    width: 100%;
+  }
+  
+  .responseCard {
+    margin-top: 24px;
+    text-align: left;
+  }
