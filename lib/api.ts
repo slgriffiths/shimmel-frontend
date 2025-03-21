@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  withCredentials: true,
+  withCredentials: true,  // Ensures cookies (refresh token) are sent
   headers: { "Content-Type": "application/json" },
 });
 
@@ -16,12 +16,14 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/refresh_token`,
+          `${process.env.NEXT_PUBLIC_API_URL}/refresh_token`,
           {},
           { withCredentials: true }
         );
 
+        api.defaults.headers.Authorization = `Bearer ${data.access_token}`;
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
+
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Failed to refresh token", refreshError);

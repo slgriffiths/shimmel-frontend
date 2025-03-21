@@ -1,20 +1,23 @@
-import { auth0 } from "@/lib/auth0"
+// "use client";
+import { useAuth } from "@/hooks/useAuth";
+import { Layout, Menu, Typography, Button } from "antd";
 
-export default async function Home() {
-  const session = await auth0.getSession()
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
-  if (!session) {
-    return (
-      <main>
-        <a href="/auth/login?screen_hint=signup">Sign up</a>
-        <a href="/auth/login">Log in</a>
-      </main>
-    )
-  }
+export default function DashboardPage() {
+  const { user, logout } = useAuth();
 
   return (
-    <main>
-      <h1>Welcome, {session.user.name}!</h1>
-    </main>
-  )
+    <Layout style={{ minHeight: "100vh" }}>
+      <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#001529", color: "white", padding: "0 20px" }}>
+        <Title level={3} style={{ color: "white", margin: 0 }}>Dashboard</Title>
+        <Button type="primary" onClick={logout}>Logout</Button>
+      </Header>
+      <Content style={{ padding: "20px" }}>
+        <Title level={2}>Welcome, {user?.first_name} {user?.last_name}!</Title>
+        <p>Email: {user?.email}</p>
+      </Content>
+    </Layout>
+  );
 }
