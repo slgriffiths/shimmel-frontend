@@ -10,8 +10,7 @@ import { useRouter, useParams } from "next/navigation";
 const { Title, Paragraph } = Typography;
 
 export default function SearchChat({ directTo, prompt }: { directTo?: string; prompt?: string }) {
-  const [query, setQuery] = useState(prompt || "");
-  const [response, setResponse] = useState("");
+  const [query, setQuery] = useState(prompt || "");  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -66,10 +65,11 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         return;
       }
     }
-
-    setResponse("");
+    
     setLoading(true);
     setError("");
+
+    let hasAppliedUserMessage = false;
 
     try {
       let res;
@@ -93,38 +93,48 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
       }
 
       const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const decoder = new TextDecoder("utf-8");      
 
       while (true) {
         const { value, done } = await reader!.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-
+        
         chunk
           .split("\n\n")
           .filter(Boolean)
           .forEach((line) => {
             const data = line.replace(/^data:\s*/, "").trim();
             try {
-              const parsed = JSON.parse(data);
-
+              const parsed = JSON.parse(data);              
+        
               if (parsed.type === "content") {
-                setResponse((prev) => (prev || "") + parsed.content);
-                setMessages((prev) => [
-                  ...prev,
-                  { role: "user", content: query },
-                  { role: "assistant", content: (prev || "") + parsed.content },
-                ]);
+                if (!hasAppliedUserMessage) {
+                  hasAppliedUserMessage = true;
+                  setMessages((prev) => [...prev, { role: "user", content: query }]);
+                }
+                
+                // Add or update AI response
+                setMessages((prev) => {
+                  const lastMessage = prev[prev.length - 1];
+                  if (lastMessage?.role === "assistant") {
+                    return prev.map((msg, index, arr) =>
+                      index === arr.length - 1 ? { ...msg, content: msg.content + parsed.content } : msg
+                    );
+                  } else {
+                    return [...prev, { role: "assistant", content: parsed.content }];
+                  }
+                });
               } else if (parsed.type === "done") {
                 setLoading(false);
               } else if (parsed.type === "error") {
                 setError(parsed.message || "Unexpected error");
               }
-            } catch {
+            } catch (err) {
               console.warn("Non-JSON chunk:", data);
             }
-          });
+          });        
       }
     } catch (err: any) {
       console.error("Streaming failed:", err);

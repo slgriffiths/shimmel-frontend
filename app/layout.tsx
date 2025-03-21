@@ -124,10 +124,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Main Content */}
         <Layout>
-          <Header style={{ background: "#fff", padding: "16px", display: "flex", justifyContent: "space-between" }}>
+          {/* <Header style={{ background: "#fff", padding: "16px", display: "flex", justifyContent: "space-between" }}>
             
             
-          </Header>
+          </Header> */}
           <Content style={{ padding: "20px" }}>{children}</Content>
         </Layout>
       </Layout>
