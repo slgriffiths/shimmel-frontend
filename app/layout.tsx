@@ -125,10 +125,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Main Content */}
         <Layout>
           <Header style={{ background: "#fff", padding: "16px", display: "flex", justifyContent: "space-between" }}>
-            <Text strong style={{ fontSize: "18px" }}>
-              Hey {user?.first_name}, What do you want to create?
-            </Text>
-            <Button type="primary">Create</Button>
+            
+            
           </Header>
           <Content style={{ padding: "20px" }}>{children}</Content>
         </Layout>

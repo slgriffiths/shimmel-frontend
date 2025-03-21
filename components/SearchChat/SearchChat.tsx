@@ -1,53 +1,70 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api"; // Make sure this import is present
-import { Input, Button, Typography, Card, Spin, Upload } from "antd";
-import { SearchOutlined, SendOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { api } from "@/lib/api";
+import { Input, Button, Typography, Spin, Upload } from "antd";
+import { SendOutlined, PaperClipOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
 
 const { Title, Paragraph } = Typography;
 
-export default function SearchChat({ directTo, prompt }: { directTo?: string, prompt?: string }) {
-  const [query, setQuery] = useState(prompt || "");  
+export default function SearchChat({ directTo, prompt }: { directTo?: string; prompt?: string }) {
+  const [query, setQuery] = useState(prompt || "");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");  
-  const [file, setFile] = useState<File | null>(null);      
-  const router = useRouter();  
+  const [error, setError] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const router = useRouter();
   const params = useParams();
-  const paramUuid = params?.uuid as string;    
+  const paramUuid = params?.uuid as string;
   const effectRan = useRef(false);
 
-  useEffect(() => {        
+  useEffect(() => {
     if (effectRan.current) return;
     effectRan.current = true;
-    
+
     if (directTo) return;
 
     if (query) {
       handleSearch();
-    }    
-  }, []);  
+    }
+  }, []);
 
-  const handleSearch = async () => {    
+  useEffect(() => {
+    if (!paramUuid) return;
+
+    const fetchConversation = async () => {
+      try {
+        const { data } = await api.get(`/conversations/${paramUuid}`);
+        const msg = data.messages || data.data?.messages || [];
+        setMessages(msg.map(({ role, content }: any) => ({ role, content })));
+      } catch (err) {
+        console.error("Failed to load conversation:", err);
+      }
+    };
+
+    fetchConversation();
+  }, [paramUuid]);
+
+  const handleSearch = async () => {
     if (!query.trim()) return;
 
-    if (directTo === 'chat') {
+    if (directTo === "chat") {
       try {
         const res = await api.post("conversations", {
           title: query,
         });
-    
+
         const uuid = res.data.uuid || res.data.data?.uuid || res.data.id;
-    
+
         return router.push(`/chat/${uuid}?p=${encodeURIComponent(query)}`);
       } catch (err) {
         console.error("Error creating conversation:", err);
         setError("Something went wrong. Please try again.");
         return;
-      }      
+      }
     }
 
     setResponse("");
@@ -93,7 +110,12 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
               const parsed = JSON.parse(data);
 
               if (parsed.type === "content") {
-                setResponse((prev) => (prev || "") + parsed.content);                
+                setResponse((prev) => (prev || "") + parsed.content);
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "user", content: query },
+                  { role: "assistant", content: (prev || "") + parsed.content },
+                ]);
               } else if (parsed.type === "done") {
                 setLoading(false);
               } else if (parsed.type === "error") {
@@ -113,52 +135,39 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string, pr
   };
 
   return (
-    <div className={styles.container}>
-      <Title level={3} className={styles.heading}>
-        Hey, how can we help you today?
-      </Title>
+    <div className={styles.chatContainer}>
+      <div className={styles.messagesContainer}>
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.aiMessage}`}>
+            <div className={styles.messageHeader}>
+              {msg.role === "user" ? (
+                <>
+                  <span className={styles.userIcon}>🧑</span> <strong>You</strong>
+                </>
+              ) : (
+                <>
+                  <span className={styles.aiIcon}>🤖</span> <strong>Shimmel</strong>
+                </>
+              )}
+            </div>
+            <Paragraph className={styles.messageText}>{msg.content}</Paragraph>
+          </div>
+        ))}
+      </div>
 
       <div className={styles.searchBox}>
-        <Input
+        <Input.TextArea
+          rows={1}
           size="large"
-          placeholder="Ask something..."
+          placeholder="Reply to Shimmel"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onPressEnter={handleSearch}
-          suffix={
-            <>
-              <Upload
-                beforeUpload={(file) => {
-                  setFile(file);
-                  return false;
-                }}
-                showUploadList={false}
-              >
-                <PaperClipOutlined style={{ marginRight: 12 }} />
-              </Upload>
-              <SearchOutlined className={styles.searchIcon} />
-            </>
-          }
         />
         <Button type="primary" icon={<SendOutlined />} size="large" onClick={handleSearch} loading={loading}>
-          {loading ? "Generating..." : "Go"}
+          {loading ? "Generating..." : "Send"}
         </Button>
       </div>
-
-      {file && (
-        <Paragraph type="secondary" style={{ marginTop: 8 }}>
-          Attached: {file.name}
-        </Paragraph>
-      )}
-
-      {loading && <Spin />}
-      {error && <Paragraph type="danger">{error}</Paragraph>}
-      {response && (
-        <Card className={styles.responseCard}>
-          <Title level={4}>AI Response:</Title>
-          <Paragraph style={{ whiteSpace: "pre-wrap" }}>{response}</Paragraph>
-        </Card>
-      )}
     </div>
   );
 }
