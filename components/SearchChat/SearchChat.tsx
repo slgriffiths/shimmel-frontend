@@ -6,6 +6,9 @@ import { Input, Button, Typography, Dropdown, Menu } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const { Paragraph } = Typography;
 
@@ -181,7 +184,14 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                 </>
               )}
             </div>
-            <Paragraph className={styles.messageText}>{stripJsonFromMessage(msg.content)}</Paragraph>
+            <Paragraph className={styles.messageText}>
+              <ReactMarkdown                
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+              >
+                {stripJsonFromMessage(msg.content)}
+              </ReactMarkdown>
+            </Paragraph>            
           </div>
         ))}
       </div>
