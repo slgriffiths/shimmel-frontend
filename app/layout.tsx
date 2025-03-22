@@ -36,8 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   if (isLoading) {
     return (
-      <html lang="en">
-        <body>
+      <html lang="en" style={{ margin: 0, padding: 0 }}>
+        <body style={{ margin: 0, padding: 0 }}>
           <Layout style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
             <Spin size="large" />
           </Layout>
@@ -98,39 +98,43 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <UserProvider>
-      <Layout style={{ minHeight: "100vh" }}>
-        {/* Sidebar */}
-        <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} width={250} theme="light">
-          <div style={{ padding: "16px", textAlign: "center" }}>
-            <Button type="primary" icon={<PlusOutlined />} block>
-              Create Content
-            </Button>
-          </div>
-          <Menu theme="light" mode="inline" defaultSelectedKeys={["1"]} items={menuItems} />
-
-          {/* Profile + Settings Dropup */}
-          <div style={{ position: "absolute", bottom: 30, width: "100%", textAlign: "center" }}>
-            <Dropdown menu={profileMenu} placement="top">
-              <div style={{ cursor: "pointer", padding: "10px" }}>
-                <Avatar style={{ backgroundColor: "#1890ff" }}>{user?.first_name?.charAt(0)}</Avatar>
-                {!collapsed && (
-                  <Text style={{ marginLeft: 8 }}>{user?.first_name} {user?.last_name}</Text>
-                )}
+    <html lang="en" style={{ margin: 0, padding: 0 }}>
+      <body style={{ margin: 0, padding: 0 }}>
+        <UserProvider>
+          <Layout style={{ minHeight: "100vh" }}>
+            {/* Sidebar */}
+            <Sider style={{ borderRight: '1px solid #ccc' }} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} width={250} theme="light">
+              <div style={{ padding: "16px", textAlign: "center" }}>
+                <Button type="primary" icon={<PlusOutlined />} block>
+                  Discover Insights
+                </Button>
               </div>
-            </Dropdown>
-          </div>
-        </Sider>
+              <Menu theme="light" mode="inline" defaultSelectedKeys={["1"]} items={menuItems} />
 
-        {/* Main Content */}
-        <Layout>
-          {/* <Header style={{ background: "#fff", padding: "16px", display: "flex", justifyContent: "space-between" }}>
-            
-            
-          </Header> */}
-          <Content style={{ padding: "20px" }}>{children}</Content>
-        </Layout>
-      </Layout>
-    </UserProvider>
+              {/* Profile + Settings Dropup */}
+              <div style={{ position: "absolute", bottom: 60, width: "100%", textAlign: "center" }}>
+                <Dropdown menu={profileMenu} placement="top">
+                  <div style={{ cursor: "pointer", padding: "10px" }}>
+                    <Avatar style={{ backgroundColor: "#1890ff" }}>{user?.first_name?.charAt(0)}</Avatar>
+                    {!collapsed && (
+                      <Text style={{ marginLeft: 8 }}>{user?.first_name} {user?.last_name}</Text>
+                    )}
+                  </div>
+                </Dropdown>
+              </div>
+            </Sider>
+
+            {/* Main Content */}
+            <Layout>
+              {/* <Header style={{ background: "#fff", padding: "16px", display: "flex", justifyContent: "space-between" }}>
+                
+                
+              </Header> */}
+              <Content style={{ padding: 0 }}>{children}</Content>
+            </Layout>
+          </Layout>
+        </UserProvider>
+      </body>
+    </html>
   );
 }

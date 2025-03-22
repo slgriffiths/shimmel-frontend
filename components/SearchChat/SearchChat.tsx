@@ -38,8 +38,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         effectRan.current = true;
 
         if (directTo) return;
-
-        console.log({ msgs, query})
+        
         if (msgs.length === 0 && query) handleSearch();        
       } catch (err) {
         console.error("Failed to load conversation:", err);
@@ -239,19 +238,19 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
       </div>
 
       <div className={styles.searchBox}>
-      <Input.TextArea
-        size="large"
-        placeholder="Reply to Shimmel"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoSize={{ minRows: 1, maxRows: 4 }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault(); // prevent new line
-            handleSearch();
-            }
-        }}          
-      />
+        <Input.TextArea
+          size="large"
+          placeholder="Reply to Shimmel"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoSize={{ minRows: 1, maxRows: 4 }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // prevent new line
+              handleSearch();
+              }
+          }}          
+        />
         <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
           {loading ? "Generating..." : "Send"}
         </Button>
