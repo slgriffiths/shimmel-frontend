@@ -157,7 +157,13 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
     handleSearch(value);
   };
 
-  console.log({ actionSuggestions})
+  const stripJsonFromMessage = (message: string) => {
+    const jsonStartIndex = message.indexOf('{');
+    if (jsonStartIndex !== -1) {
+      return message.substring(0, jsonStartIndex).trim();
+    }
+    return message;
+  };
 
   return (
     <div className={styles.chatContainer}>
@@ -175,7 +181,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                 </>
               )}
             </div>
-            <Paragraph className={styles.messageText}>{msg.content}</Paragraph>
+            <Paragraph className={styles.messageText}>{stripJsonFromMessage(msg.content)}</Paragraph>
           </div>
         ))}
       </div>
