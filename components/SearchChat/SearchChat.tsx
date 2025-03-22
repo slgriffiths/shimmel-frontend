@@ -21,24 +21,22 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
   const effectRan = useRef(false);
 
   useEffect(() => {
-    if (effectRan.current) return;
-    effectRan.current = true;
-
-    if (directTo) return;
-
-    if (query) {
-      handleSearch();
-    }
-  }, []);
-
-  useEffect(() => {
     if (!paramUuid) return;
 
     const fetchConversation = async () => {
       try {
         const { data } = await api.get(`/conversations/${paramUuid}`);
-        const msg = data.messages || data.data?.messages || [];
-        setMessages(msg.map(({ role, content }: any) => ({ role, content })));
+        const msgs = data.messages || data.data?.messages || [];
+        setMessages(msgs.map(({ role, content }: any) => ({ role, content })));
+
+        // After we've loaded the conversation, we can try and auto-run the search
+        if (effectRan.current) return;
+        effectRan.current = true;
+
+        if (directTo) return;
+
+        console.log({ msgs, query})
+        if (msgs.length === 0 && query) handleSearch();        
       } catch (err) {
         console.error("Failed to load conversation:", err);
       }
