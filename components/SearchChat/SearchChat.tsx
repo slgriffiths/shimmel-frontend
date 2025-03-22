@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
-import { Input, Button, Typography, Dropdown, Menu, Flex, Divider } from "antd";
+import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps } from "antd";
 import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
@@ -210,17 +210,14 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                           </Button>
                         );
                       } else if (action.type === "dropdown") {
-                        const menu = (
-                          <Menu>
-                            {action.options.map((option: any, idx: number) => (
-                              <Menu.Item key={idx} onClick={() => handleActionClick(option.value)}>
-                                {option.label}
-                              </Menu.Item>
-                            ))}
-                          </Menu>
-                        );
+                        const items: MenuProps['items'] = action.options.map((option: any, idx: number) => ({
+                          key: idx,
+                          label: option.label,
+                          onClick: () => handleActionClick(option.value),
+                        }));
+                        
                         return (
-                          <Dropdown key={idx} overlay={menu}>
+                          <Dropdown key={idx} menu={{ items }}>
                             <Button>
                               {action.label} <DownOutlined />
                             </Button>
