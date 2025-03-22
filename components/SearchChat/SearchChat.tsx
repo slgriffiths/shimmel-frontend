@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
-import { Input, Button, Typography, Dropdown, Menu } from "antd";
-import { SendOutlined, DownOutlined } from "@ant-design/icons";
+import { Input, Button, Typography, Dropdown, Menu, Flex, Divider } from "antd";
+import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -171,6 +171,8 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
     return message;
   };
 
+  const lastMessageIndex = messages.length - 1;
+
   return (
     <div className={styles.chatContainer}>
       <div className={styles.messagesContainer}>
@@ -187,49 +189,54 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                 </>
               )}
             </div>
-            <Paragraph className={styles.messageText}>
+            <div className={styles.messageText}>
               <ReactMarkdown                
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}
               >
                 {stripJsonFromMessage(msg.content)}
               </ReactMarkdown>
-            </Paragraph>            
+            </div>            
+            {idx === lastMessageIndex && actionSuggestions.length > 0 && (
+              <Flex vertical wrap>          
+                <Divider style={{ margin: '14px 0'}} />
+                <div className={styles.actionSuggestions}>
+                  <Flex gap="small" wrap>
+                    {actionSuggestions.map((action, idx) => {
+                      if (action.type === "button") {
+                        return (
+                          <Button color="default" variant="filled" size="middle" key={idx} onClick={() => handleActionClick(action.value)} icon={<ThunderboltOutlined />}>
+                            {action.label}
+                            <CaretRightOutlined />
+                          </Button>
+                        );
+                      } else if (action.type === "dropdown") {
+                        const menu = (
+                          <Menu>
+                            {action.options.map((option: any, idx: number) => (
+                              <Menu.Item key={idx} onClick={() => handleActionClick(option.value)}>
+                                {option.label}
+                              </Menu.Item>
+                            ))}
+                          </Menu>
+                        );
+                        return (
+                          <Dropdown key={idx} overlay={menu}>
+                            <Button>
+                              {action.label} <DownOutlined />
+                            </Button>
+                          </Dropdown>
+                        );
+                      }
+                      return null;
+                    })}
+                  </Flex>
+                </div>
+              </Flex>              
+            )}
           </div>
-        ))}
+        ))}        
       </div>
-
-      {actionSuggestions.length > 0 && (
-        <div className={styles.actionSuggestions}>
-          {actionSuggestions.map((action, idx) => {
-            if (action.type === "button") {
-              return (
-                <Button key={idx} onClick={() => handleActionClick(action.value)}>
-                  {action.label}
-                </Button>
-              );
-            } else if (action.type === "dropdown") {
-              const menu = (
-                <Menu>
-                  {action.options.map((option: any, idx: number) => (
-                    <Menu.Item key={idx} onClick={() => handleActionClick(option.value)}>
-                      {option.label}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              );
-              return (
-                <Dropdown key={idx} overlay={menu}>
-                  <Button>
-                    {action.label} <DownOutlined />
-                  </Button>
-                </Dropdown>
-              );
-            }
-            return null;
-          })}
-        </div>
-      )}
 
       <div className={styles.searchBox}>
       <Input.TextArea
