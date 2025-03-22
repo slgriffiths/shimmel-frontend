@@ -77,6 +77,8 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
       if (file) {
         const formData = new FormData();
         formData.append("conversation_id", paramUuid || "");
+        // Update this to use research template
+        formData.append("instructions", "qualitative")
         formData.append("prompt", query);
         formData.append("file", file);
 
@@ -88,7 +90,12 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: query, conversation_id: paramUuid }),
+          body: JSON.stringify({ 
+            prompt: query,
+            conversation_id: paramUuid,
+            // Update this to use research template
+            instructions: "qualitative"
+        }),
         });
       }
 
