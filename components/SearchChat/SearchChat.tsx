@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
-import { Input, Button, Typography } from "antd";
+import { Input, Button, Typography, Dropdown, Menu } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
@@ -15,6 +15,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [actionSuggestions, setActionSuggestions] = useState<any[]>([]);
   const router = useRouter();
   const params = useParams();
   const paramUuid = params?.uuid as string;
@@ -45,18 +46,18 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
     fetchConversation();
   }, [paramUuid]);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = async (searchQuery = query) => {
+    if (!searchQuery.trim()) return;
 
     if (directTo === "chat") {
       try {
         const res = await api.post("conversations", {
-          title: query,
+          title: searchQuery,
         });
 
         const uuid = res.data.uuid || res.data.data?.uuid || res.data.id;
 
-        return router.push(`/chat/${uuid}?p=${encodeURIComponent(query)}`);
+        return router.push(`/chat/${uuid}?p=${encodeURIComponent(searchQuery)}`);
       } catch (err) {
         console.error("Error creating conversation:", err);
         setError("Something went wrong. Please try again.");
@@ -77,7 +78,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         formData.append("conversation_id", paramUuid || "");
         // Update this to use research template
         formData.append("instructions", "qualitative")
-        formData.append("prompt", query);
+        formData.append("prompt", searchQuery);
         formData.append("file", file);
 
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
@@ -89,7 +90,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            prompt: query,
+            prompt: searchQuery,
             conversation_id: paramUuid,
             // Update this to use research template
             instructions: "qualitative"
@@ -117,7 +118,7 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
               if (parsed.type === "content") {
                 if (!hasAppliedUserMessage) {
                   hasAppliedUserMessage = true;
-                  setMessages((prev) => [...prev, { role: "user", content: query }]);
+                  setMessages((prev) => [...prev, { role: "user", content: searchQuery }]);
                 }
                 
                 // Add or update AI response
@@ -131,6 +132,8 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                     return [...prev, { role: "assistant", content: parsed.content }];
                   }
                 });
+              } else if (parsed.type === "action_suggestions") {
+                setActionSuggestions(parsed.follow_up_actions || []);
               } else if (parsed.type === "done") {
                 setLoading(false);
               } else if (parsed.type === "error") {
@@ -148,6 +151,13 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
       setLoading(false);
     }
   };
+
+  const handleActionClick = (value: string) => {
+    setQuery(value);
+    handleSearch(value);
+  };
+
+  console.log({ actionSuggestions})
 
   return (
     <div className={styles.chatContainer}>
@@ -170,6 +180,36 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         ))}
       </div>
 
+      {actionSuggestions.length > 0 && (
+        <div className={styles.actionSuggestions}>
+          {actionSuggestions.map((action, idx) => {
+            if (action.type === "button") {
+              return (
+                <Button key={idx} onClick={() => handleActionClick(action.value)}>
+                  {action.label}
+                </Button>
+              );
+            } else if (action.type === "dropdown") {
+              const menu = (
+                <Menu>
+                  {action.options.map((option: any, idx: number) => (
+                    <Menu.Item key={idx} onClick={() => handleActionClick(option.value)}>
+                      {option.label}
+                    </Menu.Item>
+                  ))}
+                </Menu>
+              );
+              return (
+                <Dropdown key={idx} overlay={menu}>
+                  <Button>{action.label}</Button>
+                </Dropdown>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
+
       <div className={styles.searchBox}>
         <Input.TextArea
           rows={1}
@@ -177,9 +217,9 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
           placeholder="Reply to Shimmel"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onPressEnter={handleSearch}
+          onPressEnter={() => handleSearch()}
         />
-        <Button type="primary" icon={<SendOutlined />} size="large" onClick={handleSearch} loading={loading}>
+        <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
           {loading ? "Generating..." : "Send"}
         </Button>
       </div>
