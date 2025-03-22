@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { Input, Button, Typography, Dropdown, Menu } from "antd";
-import { SendOutlined } from "@ant-design/icons";
+import { SendOutlined, DownOutlined } from "@ant-design/icons";
 import styles from "./SearchChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -70,6 +70,9 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
     
     setLoading(true);
     setError("");
+    
+    // Clear the input box after submission
+    setQuery("");
 
     let hasAppliedUserMessage = false;
 
@@ -217,7 +220,9 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
               );
               return (
                 <Dropdown key={idx} overlay={menu}>
-                  <Button>{action.label}</Button>
+                  <Button>
+                    {action.label} <DownOutlined />
+                  </Button>
                 </Dropdown>
               );
             }
@@ -227,14 +232,19 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
       )}
 
       <div className={styles.searchBox}>
-        <Input.TextArea
-          rows={1}
-          size="large"
-          placeholder="Reply to Shimmel"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onPressEnter={() => handleSearch()}
-        />
+      <Input.TextArea
+        size="large"
+        placeholder="Reply to Shimmel"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        autoSize={{ minRows: 1, maxRows: 4 }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // prevent new line
+            handleSearch();
+            }
+        }}          
+      />
         <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
           {loading ? "Generating..." : "Send"}
         </Button>
