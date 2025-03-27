@@ -1,5 +1,6 @@
 "use client";
-import SearchChat from "@/components/SearchChat/SearchChat";
+// import SearchChat from "@/components/SearchChat/SearchChat";
+import AssistantChat from "@/components/AssistantChat/AssistantChat";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -10,7 +11,7 @@ export default function DashboardPage() {
 
   return (    
     <>
-      <SearchChat prompt={prompt} />      
+      <AssistantChat prompt={prompt} />      
     </>
   );
 }
