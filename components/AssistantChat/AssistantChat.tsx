@@ -118,6 +118,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
                 setActionSuggestions(parsed.follow_up_actions || []);
               } else if (parsed.type === "done") {
                 setLoading(false);
+                setFile(null);
               } else if (parsed.type === "error") {
                 setError(parsed.message || "Unexpected error");
               }
@@ -152,6 +153,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
   const uploadProps: UploadProps = {
     name: 'file',
     multiple: true,
+    fileList: file ? [file] : [],
     onChange(info) {
         console.log(info.file, info.fileList);
 
