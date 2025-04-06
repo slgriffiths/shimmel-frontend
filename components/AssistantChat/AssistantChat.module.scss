@@ -70,15 +70,21 @@
   margin-right: 6px;
 }
 
-.searchBox {
-  display: flex;
-  align-items: center;
+.searchBoxContainer {
   padding: 12px;
   background: white;
   border-top: 1px solid #ddd;
   position: sticky;
   bottom: 0;
   left: 0;
+  width: 100%;
+  margin-bottom: 0;
+}  
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  padding: 12px;
   width: 100%;
   gap: 10px;
   justify-content: center;

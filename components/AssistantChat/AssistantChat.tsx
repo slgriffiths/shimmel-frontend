@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
-import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps } from "antd";
-import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined } from "@ant-design/icons";
+import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps, Upload, UploadProps } from "antd";
+import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined, InboxOutlined } from "@ant-design/icons";
 import styles from "./AssistantChat.module.scss";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -149,6 +149,33 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
 
   const lastMessageIndex = messages.length - 1;
 
+  const uploadProps: UploadProps = {
+    name: 'file',
+    multiple: true,
+    onChange(info) {
+        console.log(info.file, info.fileList);
+
+      const selectedFile = info.fileList?.[0];
+      
+      if (selectedFile?.originFileObj) setFile(selectedFile.originFileObj as File);
+      // const { status } = info.file;
+      // if (status !== 'uploading') {
+      //   console.log(info.file, info.fileList);
+      // }
+      // if (status === 'done') {
+      //   message.success(`${info.file.name} file uploaded successfully.`);
+      // } else if (status === 'error') {
+      //   message.error(`${info.file.name} file upload failed.`);
+      // }
+    },
+    onDrop(e) {
+      console.log('Dropped files', e.dataTransfer.files);
+      const selectedFile = e.dataTransfer.files?.[0];
+      
+      if (selectedFile) setFile(selectedFile);
+    },
+  };
+
   return (
     <div className={styles.chatContainer}>
       <div className={styles.messagesContainer}>
@@ -215,23 +242,32 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
         ))}
       </div>
 
-      <div className={styles.searchBox}>
-        <Input.TextArea
-          size="large"
-          placeholder="Reply to Shimmel"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoSize={{ minRows: 1, maxRows: 4 }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
-        />
-        <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
-          {loading ? "Generating..." : "Send"}
-        </Button>
+      <div className={styles.searchBoxContainer}>
+        <div className={styles.searchBox}>
+          <Input.TextArea
+            size="large"
+            placeholder="Reply to Shimmel"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoSize={{ minRows: 1, maxRows: 4 }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+          />
+          <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
+            {loading ? "Generating..." : "Send"}
+          </Button>
+        </div>
+        <div className={styles.fileUpload}>
+          <Upload.Dragger {...uploadProps}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>        
+          </Upload.Dragger>
+        </div>
       </div>
     </div>
   );
