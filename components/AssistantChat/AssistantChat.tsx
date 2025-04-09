@@ -48,7 +48,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
   }, [paramUuid]);
 
   const handleSearch = async (searchQuery = query) => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() && !file) return;
 
     if (directTo === "chat") {
       try {
@@ -68,6 +68,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
     setLoading(true);
     setError("");
     setQuery("");
+    setActionSuggestions([]);
     let hasAppliedUserMessage = false;
 
     try {
@@ -102,7 +103,13 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
               if (parsed.type === "content") {
                 if (!hasAppliedUserMessage) {
                   hasAppliedUserMessage = true;
-                  setMessages((prev) => [...prev, { role: "user", content: searchQuery }]);
+                  let userMessage = searchQuery;
+
+                  if (file) {
+                    userMessage += `\nUploaded file: ${file?.name}`
+                  }
+                  
+                  setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
                 }
                 setMessages((prev) => {
                   const lastMessage = prev[prev.length - 1];
@@ -155,8 +162,6 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
     multiple: true,
     fileList: file ? [file] : [],
     onChange(info) {
-        console.log(info.file, info.fileList);
-
       const selectedFile = info.fileList?.[0];
       
       if (selectedFile?.originFileObj) setFile(selectedFile.originFileObj as File);
@@ -171,7 +176,6 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
       // }
     },
     onDrop(e) {
-      console.log('Dropped files', e.dataTransfer.files);
       const selectedFile = e.dataTransfer.files?.[0];
       
       if (selectedFile) setFile(selectedFile);
