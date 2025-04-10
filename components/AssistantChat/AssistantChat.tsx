@@ -129,6 +129,11 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
               } else if (parsed.type === "error") {
                 setError(parsed.message || "Unexpected error");
               }
+
+              const container = document.getElementById("messages-container");
+              if (container) {
+                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+              }
             } catch (err) {
               console.warn("Non-JSON chunk:", data);
             }
@@ -184,7 +189,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
 
   return (
     <div className={styles.chatContainer}>
-      <div className={styles.messagesContainer}>
+      <div id='messages-container' className={styles.messagesContainer}>
         {messages.map((msg, idx) => (
           <div key={idx} className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.aiMessage}`}>
             <div className={styles.messageHeader}>
