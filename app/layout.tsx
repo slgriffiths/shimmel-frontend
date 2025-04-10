@@ -12,10 +12,35 @@ import {
   SettingOutlined,
   LogoutOutlined,
   PlusOutlined,
+  FolderOpenOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  account_id?: number;
+  account?: {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+  }
+  user_id: number;
+  user: {
+    id: snumber;
+    first_name: string;
+    last_name: string;
+    email: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -25,6 +50,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const [projects, setRecentProjects] = useState<Project[]>([]);
+
+  let navProjects = [{ key: "no-projects", label: <Spin size="small" /> }];
+  
+  if (projects.length) {
+    navProjects = projects.map((project) => ({
+      key: `project-${project.id}`,
+      label: <span>{project.name}</span>,
+      onClick: () => router.push(`/projects/${project.id}`),
+    }));
+  }
+  
+    useEffect(() => {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`)
+        .then((res) => res.json())
+        .then((data) => setRecentProjects(Array.isArray(data) ? data : []));
+    }, []);
   
   useEffect(() => {
     // TODO: Remove this when ready to work on auth
@@ -64,37 +106,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const menuItems = [
     {
-      key: "1",
+      key: "home-menu",
       icon: <HomeOutlined />,
       label: "Home",
       onClick: () => router.push("/dashboard"),
     },
     {
-      key: "2",
-      icon: <FileOutlined />,
-      label: "My Content",
-      children: [
-        { key: "21", label: "Groups" },
-        { key: "22", label: "Campaigns" },
-        { key: "23", label: "Chat" },
-        { key: "24", label: "Knowledge Base" },
-      ],
+      key: "projects-menu",
+      icon: <FolderOpenOutlined />,
+      label: "Projects",
+      children: navProjects,
     },
-    {
-      key: "3",
-      icon: <TeamOutlined />,
-      label: "Brand IQ",
-      children: [
-        { key: "31", label: "Brand Voice" },
-        { key: "32", label: "Style Guide" },
-        { key: "33", label: "Visual Guidelines" },
-      ],
-    },
-    {
-      key: "4",
-      icon: <MessageOutlined />,
-      label: "Favorites",
-    },
+    // {
+    //   key: "3",
+    //   icon: <TeamOutlined />,
+    //   label: "Brand IQ",
+    //   children: [
+    //     { key: "31", label: "Brand Voice" },
+    //     { key: "32", label: "Style Guide" },
+    //     { key: "33", label: "Visual Guidelines" },
+    //   ],
+    // },
+    // {
+    //   key: "4",
+    //   icon: <MessageOutlined />,
+    //   label: "Favorites",
+    // },
   ];
 
   return (
@@ -106,10 +143,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Sider style={{ borderRight: '1px solid #ccc' }} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} width={250} theme="light">
               <div style={{ padding: "16px", textAlign: "center" }}>
                 <Button type="primary" icon={<PlusOutlined />} block>
-                  Discover Insights
+                  Start New Chat
                 </Button>
               </div>
-              <Menu theme="light" mode="inline" defaultSelectedKeys={["1"]} items={menuItems} />
+              <Menu theme="light" mode="inline" items={menuItems} defaultOpenKeys={["projects-menu"]}/>
 
               {/* Profile + Settings Dropup */}
               <div style={{ position: "absolute", bottom: 60, width: "100%", textAlign: "center" }}>
