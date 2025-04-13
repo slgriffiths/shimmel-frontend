@@ -1,21 +1,29 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api";
-import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps, Upload, UploadProps } from "antd";
-import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined, InboxOutlined } from "@ant-design/icons";
-import styles from "./AssistantChat.module.scss";
-import { useRouter, useParams } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import { useState, useEffect, useRef } from 'react';
+import { api } from '@/lib/api';
+import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps, Upload, UploadProps } from 'antd';
+import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined, InboxOutlined } from '@ant-design/icons';
+import styles from './AssistantChat.module.scss';
+import { useRouter, useParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 const { Paragraph } = Typography;
 
-export default function AssistantChat({ directTo, prompt }: { directTo?: string; prompt?: string }) {
-  const [query, setQuery] = useState(prompt || "");  
+export default function AssistantChat({
+  directTo,
+  prompt,
+  searchOnly,
+}: {
+  directTo?: string;
+  prompt?: string;
+  searchOnly?: boolean;
+}) {
+  const [query, setQuery] = useState(prompt || '');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [actionSuggestions, setActionSuggestions] = useState<any[]>([]);
@@ -40,7 +48,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
 
         // if ((data.messages || []).length === 0 && query) handleSearch();
       } catch (err) {
-        console.error("Failed to load conversation:", err);
+        console.error('Failed to load conversation:', err);
       }
     };
 
@@ -50,41 +58,41 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
   const handleSearch = async (searchQuery = query) => {
     if (!searchQuery.trim() && !file) return;
 
-    if (directTo === "chat") {
+    if (directTo === 'chat') {
       try {
-        const res = await api.post("conversations", {
+        const res = await api.post('conversations', {
           title: searchQuery,
         });
 
         const uuid = res.data.uuid || res.data.data?.uuid || res.data.id;
         return router.push(`/chat/${uuid}?p=${encodeURIComponent(searchQuery)}`);
       } catch (err) {
-        console.error("Error creating conversation:", err);
-        setError("Something went wrong. Please try again.");
+        console.error('Error creating conversation:', err);
+        setError('Something went wrong. Please try again.');
         return;
       }
     }
 
     setLoading(true);
-    setError("");
-    setQuery("");
+    setError('');
+    setQuery('');
     setActionSuggestions([]);
     let hasAppliedUserMessage = false;
 
     try {
       const formData = new FormData();
-      formData.append("conversation_id", paramUuid || "");
-      formData.append("instructions", "qualitative");
-      formData.append("prompt", searchQuery);
-      if (file) formData.append("file", file);
+      formData.append('conversation_id', paramUuid || '');
+      formData.append('instructions', 'qualitative');
+      formData.append('prompt', searchQuery);
+      if (file) formData.append('file', file);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/assistant_stream`, {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
       const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const decoder = new TextDecoder('utf-8');
 
       while (true) {
         const { value, done } = await reader!.read();
@@ -93,55 +101,55 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
         const chunk = decoder.decode(value, { stream: true });
 
         chunk
-          .split("\n\n")
+          .split('\n\n')
           .filter(Boolean)
           .forEach((line) => {
-            const data = line.replace(/^data:\s*/, "").trim();
+            const data = line.replace(/^data:\s*/, '').trim();
             try {
               const parsed = JSON.parse(data);
 
-              if (parsed.type === "content") {
+              if (parsed.type === 'content') {
                 if (!hasAppliedUserMessage) {
                   hasAppliedUserMessage = true;
                   let userMessage = searchQuery;
 
                   if (file) {
-                    userMessage += `\nUploaded file: ${file?.name}`
+                    userMessage += `\nUploaded file: ${file?.name}`;
                   }
-                  
-                  setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+
+                  setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
                 }
                 setMessages((prev) => {
                   const lastMessage = prev[prev.length - 1];
-                  if (lastMessage?.role === "assistant") {
+                  if (lastMessage?.role === 'assistant') {
                     return prev.map((msg, index, arr) =>
                       index === arr.length - 1 ? { ...msg, content: msg.content + parsed.content } : msg
                     );
                   } else {
-                    return [...prev, { role: "assistant", content: parsed.content }];
+                    return [...prev, { role: 'assistant', content: parsed.content }];
                   }
                 });
-              } else if (parsed.type === "action_suggestions") {
+              } else if (parsed.type === 'action_suggestions') {
                 setActionSuggestions(parsed.follow_up_actions || []);
-              } else if (parsed.type === "done") {
+              } else if (parsed.type === 'done') {
                 setLoading(false);
                 setFile(null);
-              } else if (parsed.type === "error") {
-                setError(parsed.message || "Unexpected error");
+              } else if (parsed.type === 'error') {
+                setError(parsed.message || 'Unexpected error');
               }
 
-              const container = document.getElementById("messages-container");
+              const container = document.getElementById('messages-container');
               if (container) {
-                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
               }
             } catch (err) {
-              console.warn("Non-JSON chunk:", data);
+              console.warn('Non-JSON chunk:', data);
             }
           });
       }
     } catch (err: any) {
-      console.error("Streaming failed:", err);
-      setError("Something went wrong. Please try again.");
+      console.error('Streaming failed:', err);
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -153,7 +161,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
   };
 
   const stripJsonFromMessage = (message: string) => {
-    const jsonStartIndex = message.indexOf("{");
+    const jsonStartIndex = message.indexOf('{');
     if (jsonStartIndex !== -1) {
       return message.substring(0, jsonStartIndex).trim();
     }
@@ -168,7 +176,7 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
     fileList: file ? [file] : [],
     onChange(info) {
       const selectedFile = info.fileList?.[0];
-      
+
       if (selectedFile?.originFileObj) setFile(selectedFile.originFileObj as File);
       // const { status } = info.file;
       // if (status !== 'uploading') {
@@ -182,18 +190,20 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
     },
     onDrop(e) {
       const selectedFile = e.dataTransfer.files?.[0];
-      
+
       if (selectedFile) setFile(selectedFile);
     },
   };
 
+  const containerClassName = searchOnly ? styles.searchOnlyContainer : '';
+
   return (
-    <div className={styles.chatContainer}>
+    <div className={`${styles.chatContainer} ${containerClassName}`}>
       <div id='messages-container' className={styles.messagesContainer}>
         {messages.map((msg, idx) => (
-          <div key={idx} className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.aiMessage}`}>
+          <div key={idx} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
             <div className={styles.messageHeader}>
-              {msg.role === "user" ? (
+              {msg.role === 'user' ? (
                 <>
                   <span className={styles.userIcon}>🧑</span> <strong>You</strong>
                 </>
@@ -210,16 +220,16 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
             </div>
             {idx === lastMessageIndex && actionSuggestions.length > 0 && (
               <Flex vertical wrap>
-                <Divider style={{ margin: "14px 0" }} />
+                <Divider style={{ margin: '14px 0' }} />
                 <div className={styles.actionSuggestions}>
-                  <Flex gap="small" wrap>
+                  <Flex gap='small' wrap>
                     {actionSuggestions.map((action, idx) => {
-                      if (action.type === "button") {
+                      if (action.type === 'button') {
                         return (
                           <Button
-                            color="default"
-                            variant="filled"
-                            size="middle"
+                            color='default'
+                            variant='filled'
+                            size='middle'
                             key={idx}
                             onClick={() => handleActionClick(action.value)}
                             icon={<ThunderboltOutlined />}
@@ -228,8 +238,8 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
                             <CaretRightOutlined />
                           </Button>
                         );
-                      } else if (action.type === "dropdown") {
-                        const items: MenuProps["items"] = action.options.map((option: any, idx: number) => ({
+                      } else if (action.type === 'dropdown') {
+                        const items: MenuProps['items'] = action.options.map((option: any, idx: number) => ({
                           key: idx,
                           label: option.label,
                           onClick: () => handleActionClick(option.value),
@@ -256,27 +266,27 @@ export default function AssistantChat({ directTo, prompt }: { directTo?: string;
       <div className={styles.searchBoxContainer}>
         <div className={styles.searchBox}>
           <Input.TextArea
-            size="large"
-            placeholder="Reply to Shimmel"
+            size='large'
+            placeholder='Reply to Shimmel'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoSize={{ minRows: 1, maxRows: 4 }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSearch();
               }
             }}
           />
-          <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
-            {loading ? "Generating..." : "Send"}
+          <Button type='primary' icon={<SendOutlined />} size='large' onClick={() => handleSearch()} loading={loading}>
+            {loading ? 'Generating...' : 'Send'}
           </Button>
         </div>
         <div className={styles.fileUpload}>
           <Upload.Dragger {...uploadProps}>
-            <p className="ant-upload-drag-icon">
+            <p className='ant-upload-drag-icon'>
               <InboxOutlined />
-            </p>        
+            </p>
           </Upload.Dragger>
         </div>
       </div>

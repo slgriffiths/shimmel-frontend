@@ -1,9 +1,9 @@
-"use client";
-import "@ant-design/v5-patch-for-react-19";
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin } from "antd";
-import { UserProvider } from "@/contexts/UserContext";
+'use client';
+import '@ant-design/v5-patch-for-react-19';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin } from 'antd';
+import { UserProvider } from '@/contexts/UserContext';
 import {
   HomeOutlined,
   FileOutlined,
@@ -13,10 +13,11 @@ import {
   LogoutOutlined,
   PlusOutlined,
   FolderOpenOutlined,
-} from "@ant-design/icons";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+} from '@ant-design/icons';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Link from 'next/link';
 
 interface Project {
   id: string;
@@ -30,10 +31,10 @@ interface Project {
     name: string;
     created_at: string;
     updated_at: string;
-  }
+  };
   user_id: number;
   user: {
-    id: snumber;
+    id: number;
     first_name: string;
     last_name: string;
     email: string;
@@ -52,36 +53,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [projects, setRecentProjects] = useState<Project[]>([]);
 
-  let navProjects = [{ key: "no-projects", label: <Spin size="small" /> }];
-  
+  const navProjects = [
+    {
+      key: 'new-project',
+      label: <Link href='/projects/new'>+ New Project</Link>,
+    },
+    { key: 'add-projects', label: <Spin size='small' /> },
+  ];
+
   if (projects.length) {
-    navProjects = projects.map((project) => ({
+    const recentProjects = projects.map((project) => ({
       key: `project-${project.id}`,
       label: <span>{project.name}</span>,
       onClick: () => router.push(`/projects/${project.id}`),
     }));
+
+    navProjects.splice(1, 1, ...recentProjects);
   }
-  
-    useEffect(() => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`)
-        .then((res) => res.json())
-        .then((data) => setRecentProjects(Array.isArray(data) ? data : []));
-    }, []);
-  
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`)
+      .then((res) => res.json())
+      .then((data) => setRecentProjects(Array.isArray(data) ? data : []));
+  }, []);
+
   useEffect(() => {
     // TODO: Remove this when ready to work on auth
-    return
-    if (!isLoading && !user && pathname !== "/login") {
-      router.push("/login");
+    return;
+    if (!isLoading && !user && pathname !== '/login') {
+      router.push('/login');
     }
   }, [user, isLoading, pathname, router]);
 
   if (isLoading) {
     return (
-      <html lang="en" style={{ margin: 0, padding: 0 }}>
+      <html lang='en' style={{ margin: 0, padding: 0 }}>
         <body style={{ margin: 0, padding: 0 }}>
-          <Layout style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <Spin size="large" />
+          <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Spin size='large' />
           </Layout>
         </body>
       </html>
@@ -91,14 +100,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const profileMenu = {
     items: [
       {
-        key: "settings",
+        key: 'settings',
         icon: <SettingOutlined />,
-        label: "Settings",
+        label: 'Settings',
       },
       {
-        key: "logout",
+        key: 'logout',
         icon: <LogoutOutlined />,
-        label: "Logout",
+        label: 'Logout',
         onClick: logout,
       },
     ],
@@ -106,15 +115,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const menuItems = [
     {
-      key: "home-menu",
+      key: 'home-menu',
       icon: <HomeOutlined />,
-      label: "Home",
-      onClick: () => router.push("/dashboard"),
+      label: 'Home',
+      onClick: () => router.push('/dashboard'),
     },
     {
-      key: "projects-menu",
+      key: 'projects-menu',
       icon: <FolderOpenOutlined />,
-      label: "Projects",
+      label: 'Projects',
       children: navProjects,
     },
     // {
@@ -135,26 +144,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <html lang="en" style={{ margin: 0, padding: 0 }}>
+    <html lang='en' style={{ margin: 0, padding: 0 }}>
       <body style={{ margin: 0, padding: 0 }}>
         <UserProvider>
-          <Layout style={{ minHeight: "100vh" }}>
+          <Layout style={{ minHeight: '100vh' }}>
             {/* Sidebar */}
-            <Sider style={{ borderRight: '1px solid #ccc' }} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} width={250} theme="light">
-              <div style={{ padding: "16px", textAlign: "center" }}>
-                <Button type="primary" icon={<PlusOutlined />} block>
+            <Sider
+              style={{ borderRight: '1px solid #ccc' }}
+              collapsible
+              collapsed={collapsed}
+              onCollapse={(value) => setCollapsed(value)}
+              theme='light'
+            >
+              <div style={{ padding: '16px', textAlign: 'center' }}>
+                <Button type='primary' icon={<PlusOutlined />} block>
                   Start New Chat
                 </Button>
               </div>
-              <Menu theme="light" mode="inline" items={menuItems} defaultOpenKeys={["projects-menu"]}/>
+              <Menu theme='light' mode='inline' items={menuItems} defaultOpenKeys={['projects-menu']} />
 
               {/* Profile + Settings Dropup */}
-              <div style={{ position: "absolute", bottom: 60, width: "100%", textAlign: "center" }}>
-                <Dropdown menu={profileMenu} placement="top">
-                  <div style={{ cursor: "pointer", padding: "10px" }}>
-                    <Avatar style={{ backgroundColor: "#1890ff" }}>{user?.first_name?.charAt(0)}</Avatar>
+              <div style={{ position: 'absolute', bottom: 60, width: '100%', textAlign: 'center' }}>
+                <Dropdown menu={profileMenu} placement='top'>
+                  <div style={{ cursor: 'pointer', padding: '10px' }}>
+                    <Avatar style={{ backgroundColor: '#1890ff' }}>{user?.first_name?.charAt(0)}</Avatar>
                     {!collapsed && (
-                      <Text style={{ marginLeft: 8 }}>{user?.first_name} {user?.last_name}</Text>
+                      <Text style={{ marginLeft: 8 }}>
+                        {user?.first_name} {user?.last_name}
+                      </Text>
                     )}
                   </div>
                 </Dropdown>
