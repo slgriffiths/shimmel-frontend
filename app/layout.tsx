@@ -2,7 +2,7 @@
 import '@ant-design/v5-patch-for-react-19';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin } from 'antd';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin, Tooltip } from 'antd';
 import { UserProvider } from '@/contexts/UserContext';
 import {
   HomeOutlined,
@@ -49,7 +49,7 @@ const { Text } = Typography;
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
   const [projects, setRecentProjects] = useState<Project[]>([]);
 
@@ -157,11 +157,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               theme='light'
             >
               <div style={{ padding: '16px', textAlign: 'center' }}>
-                <Button type='primary' icon={<PlusOutlined />} block>
-                  Start New Chat
-                </Button>
+                <Tooltip title={collapsed ? 'Start New Chat' : ''} placement='right'>
+                  <Button type='primary' icon={<PlusOutlined />} block>
+                    {collapsed ? '' : 'Start New Chat'}
+                  </Button>
+                </Tooltip>
               </div>
-              <Menu theme='light' mode='inline' items={menuItems} defaultOpenKeys={['projects-menu']} />
+              <Menu
+                theme='light'
+                mode='inline'
+                items={menuItems}
+                defaultOpenKeys={collapsed ? [] : ['projects-menu']}
+              />
 
               {/* Profile + Settings Dropup */}
               <div style={{ position: 'absolute', bottom: 60, width: '100%', textAlign: 'center' }}>

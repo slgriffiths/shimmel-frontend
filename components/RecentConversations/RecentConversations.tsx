@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { List, Card, Typography } from "antd";
-import styles from "./RecentConversations.module.scss";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import { List, Card, Typography, Row, Col } from 'antd';
+import styles from './RecentConversations.module.scss';
+import Link from 'next/link';
 
 const { Title, Paragraph } = Typography;
 
@@ -26,20 +26,18 @@ export default function RecentConversations() {
   return (
     <div className={styles.recentConversations}>
       <Title level={4}>Recent Conversations</Title>
-      <List
-        itemLayout="horizontal"
-        dataSource={conversations.slice(0, 5)}
-        renderItem={(conv) => (
-          <List.Item>
-            <Link href={`/chat/${conv.uuid}`}>
-              <Card hoverable className={styles.conversationCard}>
+      <Row gutter={[16, 16]} style={{ marginBottom: '20px' }}>
+        {conversations.slice(0, 5).map((conv) => (
+          <Col md={10} key={conv.id}>
+            <Link key={conv.uuid} href={`/chat/${conv.uuid}`}>
+              <Card hoverable>
                 <Paragraph strong>{conv.title}</Paragraph>
-                <Paragraph type="secondary">{conv.last_message}</Paragraph>
+                <Paragraph type='secondary'>{conv.last_message}</Paragraph>
               </Card>
             </Link>
-          </List.Item>
-        )}
-      />
+          </Col>
+        ))}
+      </Row>
     </div>
   );
 }

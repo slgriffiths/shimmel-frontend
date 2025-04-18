@@ -2,7 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
-import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps, Upload, UploadProps } from 'antd';
+import {
+  Input,
+  Button,
+  Typography,
+  Dropdown,
+  Menu,
+  Flex,
+  Divider,
+  MenuProps,
+  Upload,
+  UploadProps,
+  message as antdMessage,
+} from 'antd';
 import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined, InboxOutlined } from '@ant-design/icons';
 import styles from './AssistantChat.module.scss';
 import { useRouter, useParams } from 'next/navigation';
@@ -11,6 +23,8 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
 const { Paragraph } = Typography;
+
+const MESSAGE_CONTAINER_ID = 'messages-container';
 
 export default function AssistantChat({
   directTo,
@@ -38,22 +52,36 @@ export default function AssistantChat({
     const fetchConversation = async () => {
       try {
         const { data } = await api.get(`/conversations/${paramUuid}`);
-        // TODO: This doesn't use messages. How do I get the thread's previous runs?
-        // setMessages(data.messages || []);
+
+        const threadId = data.openai_thread_id;
+        if (threadId) {
+          const threadMessagesRes = await api.get(`/conversations/${data.id}/messages`);
+          const threadMessages = threadMessagesRes.data || [];
+          const formatted = threadMessages.map((m: any) => ({
+            role: m.role,
+            content: m.content[0]?.text?.value || '',
+          }));
+          setMessages(formatted);
+
+          const container = document.getElementById(MESSAGE_CONTAINER_ID);
+          if (container) {
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+          }
+        }
 
         if (effectRan.current) return;
         effectRan.current = true;
 
         if (directTo) return;
-
-        // if ((data.messages || []).length === 0 && query) handleSearch();
       } catch (err) {
         console.error('Failed to load conversation:', err);
+        antdMessage.error('Error loading conversation.');
+        router.push('/dashboard');
       }
     };
 
     fetchConversation();
-  }, [paramUuid]);
+  }, [paramUuid, directTo]);
 
   const handleSearch = async (searchQuery = query) => {
     if (!searchQuery.trim() && !file) return;
@@ -138,7 +166,7 @@ export default function AssistantChat({
                 setError(parsed.message || 'Unexpected error');
               }
 
-              const container = document.getElementById('messages-container');
+              const container = document.getElementById(MESSAGE_CONTAINER_ID);
               if (container) {
                 container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
               }
@@ -176,21 +204,10 @@ export default function AssistantChat({
     fileList: file ? [file] : [],
     onChange(info) {
       const selectedFile = info.fileList?.[0];
-
       if (selectedFile?.originFileObj) setFile(selectedFile.originFileObj as File);
-      // const { status } = info.file;
-      // if (status !== 'uploading') {
-      //   console.log(info.file, info.fileList);
-      // }
-      // if (status === 'done') {
-      //   message.success(`${info.file.name} file uploaded successfully.`);
-      // } else if (status === 'error') {
-      //   message.error(`${info.file.name} file upload failed.`);
-      // }
     },
     onDrop(e) {
       const selectedFile = e.dataTransfer.files?.[0];
-
       if (selectedFile) setFile(selectedFile);
     },
   };
@@ -199,7 +216,7 @@ export default function AssistantChat({
 
   return (
     <div className={`${styles.chatContainer} ${containerClassName}`}>
-      <div id='messages-container' className={styles.messagesContainer}>
+      <div id={MESSAGE_CONTAINER_ID} className={styles.messagesContainer}>
         {messages.map((msg, idx) => (
           <div key={idx} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
             <div className={styles.messageHeader}>
