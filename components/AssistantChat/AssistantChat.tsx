@@ -68,10 +68,12 @@ export default function AssistantChat({
         if (threadId) {
           const threadMessagesRes = await api.get(`/conversations/${data.id}/messages`);
           const threadMessages = threadMessagesRes.data || [];
-          const formatted = threadMessages.map((m: any) => ({
-            role: m.role,
-            content: m.content[0]?.text?.value || '',
-          }));
+          const formatted = threadMessages
+            .map((m: any) => ({
+              role: m.role,
+              content: m.content[0]?.text?.value || '',
+            }))
+            .reverse();
           setMessages(formatted);
 
           const container = document.getElementById(MESSAGE_CONTAINER_ID);
