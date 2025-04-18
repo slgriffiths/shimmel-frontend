@@ -18,11 +18,13 @@ export default function AssistantChat({
   prompt,
   searchOnly,
   assistantId = DEFAULT_ASSISTANT_ID,
+  projectId,
 }: {
   directTo?: string;
   prompt?: string;
   searchOnly?: boolean;
   assistantId?: number;
+  projectId?: number;
 }) {
   const [query, setQuery] = useState(prompt || '');
   const [loading, setLoading] = useState(false);
@@ -127,6 +129,7 @@ export default function AssistantChat({
       formData.append('conversation_uuid', paramUuid || '');
       formData.append('instructions', 'qualitative');
       formData.append('assistant_id', assistantId.toString());
+      formData.append('project_id', projectId?.toString() || '');
       formData.append('prompt', searchQuery);
       if (file) formData.append('file', file);
 

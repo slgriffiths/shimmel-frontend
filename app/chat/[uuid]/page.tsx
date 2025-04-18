@@ -1,17 +1,17 @@
-"use client";
+'use client';
 // import SearchChat from "@/components/SearchChat/SearchChat";
-import AssistantChat from "@/components/AssistantChat/AssistantChat";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import AssistantChat from '@/components/AssistantChat/AssistantChat';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function DashboardPage() {  
+export default function ChatPage() {
   const searchParams = useSearchParams();
-  const initialPrompt = searchParams.get("p") || "";
+  const initialPrompt = searchParams.get('p') || '';
   const [prompt] = useState(initialPrompt);
 
-  return (    
+  return (
     <>
-      <AssistantChat prompt={prompt} />      
+      <AssistantChat prompt={prompt} />
     </>
   );
 }
