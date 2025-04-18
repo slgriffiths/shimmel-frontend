@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { List, Card, Typography, Row, Col } from 'antd';
+import { Card, Typography, Row, Col, message as antdMessage } from 'antd';
 import styles from './RecentConversations.module.scss';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 const { Title, Paragraph } = Typography;
 
@@ -18,9 +19,16 @@ export default function RecentConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/conversations`)
-      .then((res) => res.json())
-      .then((data) => setConversations(Array.isArray(data) ? data : []));
+    const fetchConversations = async () => {
+      try {
+        const { data } = await api.get('/conversations');
+        setConversations(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to load conversations:', err);
+        antdMessage.error('Error loading conversations.');
+      }
+    };
+    fetchConversations();
   }, []);
 
   return (

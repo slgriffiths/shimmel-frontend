@@ -1,45 +1,59 @@
-"use client"; // 🔥 This forces the component to be client-rendered
+'use client'; // 🔥 This forces the component to be client-rendered
 
-import { Card, Typography, Row, Col } from "antd";
-import styles from "./ResearchCategories.module.scss";
+import { Card, Typography, Row, Col, Spin, message as antdMessage } from 'antd';
+import styles from './ResearchCategories.module.scss';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import Link from 'next/link';
 
 const { Title, Paragraph } = Typography;
 
-const qualitativeResearch = [
-  { title: "User Interviews", description: "Gather deep insights through structured conversations." },
-  { title: "Focus Groups", description: "Understand group dynamics and collective viewpoints." },
-  { title: "Ethnographic Research", description: "Observe behaviors in real-life environments." },
-];
-
-const quantitativeResearch = [
-  { title: "Surveys", description: "Collect structured responses for statistical analysis." },
-  { title: "A/B Testing", description: "Compare variations to determine the best outcome." },
-  { title: "Usage Analytics", description: "Measure user engagement and behavioral trends." },
-];
+interface Assistant {
+  id: string;
+  name: string;
+  description: string;
+  openai_assistant_id: string;
+}
 
 export default function ResearchCategories() {
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const isFetchingAssistants = !assistants;
+
+  useEffect(() => {
+    const fetchAssistants = async () => {
+      try {
+        const { data } = await api.get('/assistants');
+        setAssistants(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to load assistants:', err);
+        antdMessage.error('Error loading assistants.');
+      }
+    };
+    fetchAssistants();
+  }, []);
+
+  if (isFetchingAssistants) {
+    return (
+      <div style={{ padding: '80px', textAlign: 'center' }}>
+        <Spin size='small' />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
-      <Title level={3}>Qualitative Research</Title>
+      <Title level={3}>Research Assistants</Title>
       <Row gutter={[16, 16]}>
-        {qualitativeResearch.map((item, index) => (
-          <Col key={index} xs={24} sm={12} md={8}>
-            <Card className={styles.researchCard} hoverable>
-              <Title level={4} className={styles.cardTitle}>{item.title}</Title>
-              <Paragraph className={styles.cardDescription}>{item.description}</Paragraph>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      <Title level={3} className={styles.sectionTitle}>Quantitative Research</Title>
-      <Row gutter={[16, 16]}>
-        {quantitativeResearch.map((item, index) => (
-          <Col key={index} xs={24} sm={12} md={8}>
-            <Card className={styles.researchCard} hoverable>
-              <Title level={4} className={styles.cardTitle}>{item.title}</Title>
-              <Paragraph className={styles.cardDescription}>{item.description}</Paragraph>
-            </Card>
+        {assistants.map((assistant) => (
+          <Col key={assistant.id} xs={24} sm={12} md={8}>
+            <Link key={assistant.id} href={`/chat/new/${assistant.id}`}>
+              <Card className={styles.researchCard} hoverable>
+                <Title level={4} className={styles.cardTitle}>
+                  {assistant.name}
+                </Title>
+                <Paragraph className={styles.cardDescription}>{assistant.description}</Paragraph>
+              </Card>
+            </Link>
           </Col>
         ))}
       </Row>

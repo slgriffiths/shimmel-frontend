@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api";
-import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps } from "antd";
-import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined } from "@ant-design/icons";
-import styles from "./SearchChat.module.scss";
-import { useRouter, useParams } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import { useState, useEffect, useRef } from 'react';
+import { api } from '@/lib/api';
+import { Input, Button, Typography, Dropdown, Menu, Flex, Divider, MenuProps } from 'antd';
+import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined } from '@ant-design/icons';
+import styles from './SearchChat.module.scss';
+import { useRouter, useParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 const { Paragraph } = Typography;
 
 export default function SearchChat({ directTo, prompt }: { directTo?: string; prompt?: string }) {
-  const [query, setQuery] = useState(prompt || "");  
+  const [query, setQuery] = useState(prompt || '');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [actionSuggestions, setActionSuggestions] = useState<any[]>([]);
@@ -38,10 +38,10 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
         effectRan.current = true;
 
         if (directTo) return;
-        
-        if (msgs.length === 0 && query) handleSearch();        
+
+        if (msgs.length === 0 && query) handleSearch();
       } catch (err) {
-        console.error("Failed to load conversation:", err);
+        console.error('Failed to load conversation:', err);
       }
     };
 
@@ -51,9 +51,9 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
   const handleSearch = async (searchQuery = query) => {
     if (!searchQuery.trim()) return;
 
-    if (directTo === "chat") {
+    if (directTo === 'chat') {
       try {
-        const res = await api.post("conversations", {
+        const res = await api.post('conversations', {
           title: searchQuery,
         });
 
@@ -61,17 +61,17 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
 
         return router.push(`/chat/${uuid}?p=${encodeURIComponent(searchQuery)}`);
       } catch (err) {
-        console.error("Error creating conversation:", err);
-        setError("Something went wrong. Please try again.");
+        console.error('Error creating conversation:', err);
+        setError('Something went wrong. Please try again.');
         return;
       }
     }
-    
+
     setLoading(true);
-    setError("");
-    
+    setError('');
+
     // Clear the input box after submission
-    setQuery("");
+    setQuery('');
 
     let hasAppliedUserMessage = false;
 
@@ -80,78 +80,78 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
 
       if (file) {
         const formData = new FormData();
-        formData.append("conversation_id", paramUuid || "");
+        formData.append('conversation_uuid', paramUuid || '');
         // Update this to use research template
-        formData.append("instructions", "qualitative")
-        formData.append("prompt", searchQuery);
-        formData.append("file", file);
+        formData.append('instructions', 'qualitative');
+        formData.append('prompt', searchQuery);
+        formData.append('file', file);
 
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
-          method: "POST",
+          method: 'POST',
           body: formData,
         });
       } else {
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             prompt: searchQuery,
-            conversation_id: paramUuid,
+            conversation_uuid: paramUuid,
             // Update this to use research template
-            instructions: "qualitative"
-        }),
+            instructions: 'qualitative',
+          }),
         });
       }
 
       const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");      
+      const decoder = new TextDecoder('utf-8');
 
       while (true) {
         const { value, done } = await reader!.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        
+
         chunk
-          .split("\n\n")
+          .split('\n\n')
           .filter(Boolean)
           .forEach((line) => {
-            const data = line.replace(/^data:\s*/, "").trim();
+            const data = line.replace(/^data:\s*/, '').trim();
             try {
-              const parsed = JSON.parse(data);              
-        
-              if (parsed.type === "content") {
+              const parsed = JSON.parse(data);
+
+              if (parsed.type === 'content') {
                 if (!hasAppliedUserMessage) {
                   hasAppliedUserMessage = true;
-                  setMessages((prev) => [...prev, { role: "user", content: searchQuery }]);
+                  setMessages((prev) => [...prev, { role: 'user', content: searchQuery }]);
                 }
-                
+
                 // Add or update AI response
                 setMessages((prev) => {
                   const lastMessage = prev[prev.length - 1];
-                  if (lastMessage?.role === "assistant") {
+                  if (lastMessage?.role === 'assistant') {
                     return prev.map((msg, index, arr) =>
                       index === arr.length - 1 ? { ...msg, content: msg.content + parsed.content } : msg
                     );
                   } else {
-                    return [...prev, { role: "assistant", content: parsed.content }];
+                    return [...prev, { role: 'assistant', content: parsed.content }];
                   }
                 });
-              } else if (parsed.type === "action_suggestions") {
+              } else if (parsed.type === 'action_suggestions') {
                 setActionSuggestions(parsed.follow_up_actions || []);
-              } else if (parsed.type === "done") {
+              } else if (parsed.type === 'done') {
                 setLoading(false);
-              } else if (parsed.type === "error") {
-                setError(parsed.message || "Unexpected error");
+              } else if (parsed.type === 'error') {
+                setError(parsed.message || 'Unexpected error');
               }
             } catch (err) {
-              console.warn("Non-JSON chunk:", data);
+              console.warn('Non-JSON chunk:', data);
             }
-          });        
+          });
       }
     } catch (err: any) {
-      console.error("Streaming failed:", err);
-      setError("Something went wrong. Please try again.");
+      console.error('Streaming failed:', err);
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -176,9 +176,9 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
     <div className={styles.chatContainer}>
       <div className={styles.messagesContainer}>
         {messages.map((msg, idx) => (
-          <div key={idx} className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.aiMessage}`}>
+          <div key={idx} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
             <div className={styles.messageHeader}>
-              {msg.role === "user" ? (
+              {msg.role === 'user' ? (
                 <>
                   <span className={styles.userIcon}>🧑</span> <strong>You</strong>
                 </>
@@ -189,33 +189,37 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
               )}
             </div>
             <div className={styles.messageText}>
-              <ReactMarkdown                
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                 {stripJsonFromMessage(msg.content)}
               </ReactMarkdown>
-            </div>            
+            </div>
             {idx === lastMessageIndex && actionSuggestions.length > 0 && (
-              <Flex vertical wrap>          
-                <Divider style={{ margin: '14px 0'}} />
+              <Flex vertical wrap>
+                <Divider style={{ margin: '14px 0' }} />
                 <div className={styles.actionSuggestions}>
-                  <Flex gap="small" wrap>
+                  <Flex gap='small' wrap>
                     {actionSuggestions.map((action, idx) => {
-                      if (action.type === "button") {
+                      if (action.type === 'button') {
                         return (
-                          <Button color="default" variant="filled" size="middle" key={idx} onClick={() => handleActionClick(action.value)} icon={<ThunderboltOutlined />}>
+                          <Button
+                            color='default'
+                            variant='filled'
+                            size='middle'
+                            key={idx}
+                            onClick={() => handleActionClick(action.value)}
+                            icon={<ThunderboltOutlined />}
+                          >
                             {action.label}
                             <CaretRightOutlined />
                           </Button>
                         );
-                      } else if (action.type === "dropdown") {
+                      } else if (action.type === 'dropdown') {
                         const items: MenuProps['items'] = action.options.map((option: any, idx: number) => ({
                           key: idx,
                           label: option.label,
                           onClick: () => handleActionClick(option.value),
                         }));
-                        
+
                         return (
                           <Dropdown key={idx} menu={{ items }}>
                             <Button>
@@ -228,28 +232,28 @@ export default function SearchChat({ directTo, prompt }: { directTo?: string; pr
                     })}
                   </Flex>
                 </div>
-              </Flex>              
+              </Flex>
             )}
           </div>
-        ))}        
+        ))}
       </div>
 
       <div className={styles.searchBox}>
         <Input.TextArea
-          size="large"
-          placeholder="Reply to Shimmel"
+          size='large'
+          placeholder='Reply to Shimmel'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoSize={{ minRows: 1, maxRows: 4 }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault(); // prevent new line
               handleSearch();
-              }
-          }}          
+            }
+          }}
         />
-        <Button type="primary" icon={<SendOutlined />} size="large" onClick={() => handleSearch()} loading={loading}>
-          {loading ? "Generating..." : "Send"}
+        <Button type='primary' icon={<SendOutlined />} size='large' onClick={() => handleSearch()} loading={loading}>
+          {loading ? 'Generating...' : 'Send'}
         </Button>
       </div>
     </div>

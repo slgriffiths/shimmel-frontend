@@ -2,19 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
-import {
-  Input,
-  Button,
-  Typography,
-  Dropdown,
-  Menu,
-  Flex,
-  Divider,
-  MenuProps,
-  Upload,
-  UploadProps,
-  message as antdMessage,
-} from 'antd';
+import { Input, Button, Dropdown, Flex, Divider, MenuProps, Upload, UploadProps, message as antdMessage } from 'antd';
 import { SendOutlined, DownOutlined, ThunderboltOutlined, CaretRightOutlined, InboxOutlined } from '@ant-design/icons';
 import styles from './AssistantChat.module.scss';
 import { useRouter, useParams } from 'next/navigation';
@@ -22,18 +10,19 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
-const { Paragraph } = Typography;
-
 const MESSAGE_CONTAINER_ID = 'messages-container';
+const DEFAULT_ASSISTANT_ID = 1; // Refers to our default Assistant, should always be 1.
 
 export default function AssistantChat({
   directTo,
   prompt,
   searchOnly,
+  assistantId = DEFAULT_ASSISTANT_ID,
 }: {
   directTo?: string;
   prompt?: string;
   searchOnly?: boolean;
+  assistantId?: number;
 }) {
   const [query, setQuery] = useState(prompt || '');
   const [loading, setLoading] = useState(false);
@@ -58,6 +47,7 @@ export default function AssistantChat({
   }, [messages]);
 
   useEffect(() => {
+    // Only fetch the conversation if the url slug has a conversation id
     if (!paramUuid) return;
 
     const fetchConversation = async () => {
@@ -68,12 +58,10 @@ export default function AssistantChat({
         if (threadId) {
           const threadMessagesRes = await api.get(`/conversations/${data.id}/messages`);
           const threadMessages = threadMessagesRes.data || [];
-          const formatted = threadMessages
-            .map((m: any) => ({
-              role: m.role,
-              content: m.content[0]?.text?.value || '',
-            }))
-            .reverse();
+          const formatted = threadMessages.map((m: any) => ({
+            role: m.role,
+            content: m.content[0]?.text?.value || '',
+          }));
           setMessages(formatted);
 
           const container = document.getElementById(MESSAGE_CONTAINER_ID);
@@ -136,8 +124,9 @@ export default function AssistantChat({
 
     try {
       const formData = new FormData();
-      formData.append('conversation_id', paramUuid || '');
+      formData.append('conversation_uuid', paramUuid || '');
       formData.append('instructions', 'qualitative');
+      formData.append('assistant_id', assistantId.toString());
       formData.append('prompt', searchQuery);
       if (file) formData.append('file', file);
 
