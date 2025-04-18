@@ -45,6 +45,17 @@ export default function AssistantChat({
   const params = useParams();
   const paramUuid = params?.uuid as string;
   const effectRan = useRef(false);
+  const shouldScrollRef = useRef(false);
+
+  useEffect(() => {
+    if (shouldScrollRef.current) {
+      const container = document.getElementById(MESSAGE_CONTAINER_ID);
+      if (container) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
+      shouldScrollRef.current = false;
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (!paramUuid) return;
@@ -105,7 +116,21 @@ export default function AssistantChat({
     setError('');
     setQuery('');
     setActionSuggestions([]);
-    let hasAppliedUserMessage = false;
+
+    // let hasAppliedUserMessage = false;
+
+    // Set the User Message instantly
+    setMessages((prev) => {
+      let userMessage = searchQuery;
+
+      if (file) {
+        userMessage += `\nUploaded file: ${file?.name}`;
+      }
+
+      shouldScrollRef.current = true;
+
+      return [...prev, { role: 'user', content: userMessage }];
+    });
 
     try {
       const formData = new FormData();
@@ -137,18 +162,22 @@ export default function AssistantChat({
               const parsed = JSON.parse(data);
 
               if (parsed.type === 'content') {
-                if (!hasAppliedUserMessage) {
-                  hasAppliedUserMessage = true;
-                  let userMessage = searchQuery;
+                // Uncomment if we want streaming service to input the user message - will have a ux delay though.
+                // if (!hasAppliedUserMessage) {
+                //   hasAppliedUserMessage = true;
+                //   let userMessage = searchQuery;
 
-                  if (file) {
-                    userMessage += `\nUploaded file: ${file?.name}`;
-                  }
+                //   if (file) {
+                //     userMessage += `\nUploaded file: ${file?.name}`;
+                //   }
 
-                  setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-                }
+                //   setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+                // }
                 setMessages((prev) => {
                   const lastMessage = prev[prev.length - 1];
+
+                  shouldScrollRef.current = true;
+
                   if (lastMessage?.role === 'assistant') {
                     return prev.map((msg, index, arr) =>
                       index === arr.length - 1 ? { ...msg, content: msg.content + parsed.content } : msg
@@ -164,11 +193,6 @@ export default function AssistantChat({
                 setFile(null);
               } else if (parsed.type === 'error') {
                 setError(parsed.message || 'Unexpected error');
-              }
-
-              const container = document.getElementById(MESSAGE_CONTAINER_ID);
-              if (container) {
-                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
               }
             } catch (err) {
               console.warn('Non-JSON chunk:', data);
