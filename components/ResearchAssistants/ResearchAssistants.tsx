@@ -1,7 +1,7 @@
 'use client'; // 🔥 This forces the component to be client-rendered
 
 import { Card, Typography, Row, Col, Spin, message as antdMessage } from 'antd';
-import styles from './ResearchCategories.module.scss';
+import styles from './ResearchAssistants.module.scss';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ interface Assistant {
   openai_assistant_id: string;
 }
 
-export default function ResearchCategories() {
+export default function ResearchAssistants() {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const isFetchingAssistants = !assistants;
 

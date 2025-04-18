@@ -1,6 +1,6 @@
 'use client';
 import RecentConversations from '@/components/RecentConversations/RecentConversations';
-import ResearchCategories from '@/components/ResearchCategories/ResearchCategories';
+import ResearchAssistants from '@/components/ResearchAssistants/ResearchAssistants';
 // import SearchChat from "@/components/SearchChat/SearchChat";
 import AssistantChat from '@/components/AssistantChat/AssistantChat';
 
@@ -11,7 +11,7 @@ export default function DashboardPage() {
         <AssistantChat directTo='chat' searchOnly />
       </div>
       <RecentConversations />
-      <ResearchCategories />
+      <ResearchAssistants />
     </div>
   );
 }

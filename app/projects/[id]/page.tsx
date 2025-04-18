@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, Typography, message, Row, Col, Spin } from 'antd';
 import { api } from '@/lib/api';
+import ResearchAssistants from '@/components/ResearchAssistants/ResearchAssistants';
 
 const { Title, Paragraph } = Typography;
 
@@ -83,6 +84,7 @@ export default function ProjectDetailPage() {
           <Paragraph type='secondary'>No conversations found for this project.</Paragraph>
         )}
       </Row>
+      <ResearchAssistants />
     </div>
   );
 }
