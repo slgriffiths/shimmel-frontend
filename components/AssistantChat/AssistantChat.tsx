@@ -35,10 +35,67 @@ export default function AssistantChat({
   const router = useRouter();
   const params = useParams();
   const paramUuid = params?.uuid as string;
+  const [conversationUuid, setConversationUuid] = useState<string | null>(paramUuid);
+
   const effectRan = useRef(false);
   const shouldScrollRef = useRef(false);
 
+  const fetchConversation = async () => {
+    try {
+      const { data } = await api.get(`/conversations/${conversationUuid}`);
+
+      const threadId = data.openai_thread_id;
+      if (threadId) {
+        const threadMessagesRes = await api.get(`/conversations/${data.id}/messages`);
+        const threadMessages = threadMessagesRes.data || [];
+        const formatted = threadMessages
+          .map((m: any) => ({
+            role: m.role,
+            content: m.content[0]?.text?.value || '',
+          }))
+          .reverse();
+
+        setMessages(formatted);
+
+        const container = document.getElementById(MESSAGE_CONTAINER_ID);
+        if (container) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+      }
+
+      if (effectRan.current) return;
+      effectRan.current = true;
+
+      if (directTo) return;
+    } catch (err) {
+      console.error('Failed to load conversation:', err);
+      antdMessage.error('Error loading conversation.');
+      router.push('/dashboard');
+    }
+  };
+
+  // Fetch conversation messages when a conversation uuid is first set
+  // Be mindful of this and make sure it doesn't conflict with the other hook
+  // useEffect(() => {
+  //   if (messages.length === 0) return;
+  //   if (!conversationUuid) return;
+
+  //   fetchConversation();
+
+  //   console.log({ m: messages.length, conversationUuid });
+  // }, [conversationUuid, messages.length]);
+
   useEffect(() => {
+    // Only fetch the conversation if the url slug has a conversation id on load
+    if (!conversationUuid) return;
+
+    fetchConversation();
+  }, [conversationUuid, directTo]);
+
+  // Fetch conversation messages
+  useEffect(() => {
+    // TODO if (messages.length > 0 && !conversationUuid)
+
     if (shouldScrollRef.current) {
       const container = document.getElementById(MESSAGE_CONTAINER_ID);
       if (container) {
@@ -47,44 +104,6 @@ export default function AssistantChat({
       shouldScrollRef.current = false;
     }
   }, [messages]);
-
-  useEffect(() => {
-    // Only fetch the conversation if the url slug has a conversation id
-    if (!paramUuid) return;
-
-    const fetchConversation = async () => {
-      try {
-        const { data } = await api.get(`/conversations/${paramUuid}`);
-
-        const threadId = data.openai_thread_id;
-        if (threadId) {
-          const threadMessagesRes = await api.get(`/conversations/${data.id}/messages`);
-          const threadMessages = threadMessagesRes.data || [];
-          const formatted = threadMessages.map((m: any) => ({
-            role: m.role,
-            content: m.content[0]?.text?.value || '',
-          }));
-          setMessages(formatted);
-
-          const container = document.getElementById(MESSAGE_CONTAINER_ID);
-          if (container) {
-            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-          }
-        }
-
-        if (effectRan.current) return;
-        effectRan.current = true;
-
-        if (directTo) return;
-      } catch (err) {
-        console.error('Failed to load conversation:', err);
-        antdMessage.error('Error loading conversation.');
-        router.push('/dashboard');
-      }
-    };
-
-    fetchConversation();
-  }, [paramUuid, directTo]);
 
   const handleSearch = async (searchQuery = query) => {
     if (!searchQuery.trim() && !file) return;
@@ -109,9 +128,6 @@ export default function AssistantChat({
     setQuery('');
     setActionSuggestions([]);
 
-    // let hasAppliedUserMessage = false;
-
-    // Set the User Message instantly
     setMessages((prev) => {
       let userMessage = searchQuery;
 
@@ -126,7 +142,7 @@ export default function AssistantChat({
 
     try {
       const formData = new FormData();
-      formData.append('conversation_uuid', paramUuid || '');
+      formData.append('conversation_uuid', conversationUuid || '');
       formData.append('instructions', 'qualitative');
       formData.append('assistant_id', assistantId.toString());
       formData.append('project_id', projectId?.toString() || '');
@@ -154,6 +170,13 @@ export default function AssistantChat({
             const data = line.replace(/^data:\s*/, '').trim();
             try {
               const parsed = JSON.parse(data);
+
+              if (!conversationUuid && parsed.conversation_uuid) {
+                // Set the conversation_uuid from the first payload event
+                // Don't use Next.js router here, as it will cause a full page reload
+                setConversationUuid(parsed.conversation_uuid);
+                window.history.pushState({}, '', `/chat/${parsed.conversation_uuid}`);
+              }
 
               if (parsed.type === 'content') {
                 // Uncomment if we want streaming service to input the user message - will have a ux delay though.
