@@ -7,6 +7,8 @@ import type { MenuProps } from 'antd';
 import styles from './WorkflowDetail.module.scss';
 import { useWorkflow, TriggerType, ActionType } from '@/contexts/WorkflowContext';
 import TriggerActionSelectionModal from './TriggerActionSelectionModal';
+import FormTriggerConfig from './FormTriggerConfig';
+import { FormField } from './formFieldTypes';
 
 const { Title, Paragraph } = Typography;
 
@@ -15,7 +17,7 @@ interface WorkflowDetailProps {
 }
 
 export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
-  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction } = useWorkflow();
+  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction, updateAction } = useWorkflow();
   const { workflow, loading, error, selectedStep, triggerTypes, actionTypes } = state;
   const [selectionModal, setSelectionModal] = useState<{ open: boolean; mode: 'trigger' | 'action' }>({
     open: false,
@@ -76,6 +78,18 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
 
   const handleCancelSelection = () => {
     setSelectionModal({ open: false, mode: 'trigger' });
+  };
+
+  const handleFormFieldsChange = (fields: FormField[]) => {
+    if (selectedStep) {
+      console.log('Updating form fields:', fields);
+      const updatedConfig = {
+        ...selectedStep.config,
+        form_fields: fields
+      };
+      console.log('Updated config:', updatedConfig);
+      updateAction(selectedStep.id, { config: updatedConfig });
+    }
   };
 
   const getActionMenuItems = (action: any): MenuProps['items'] => [
@@ -192,16 +206,31 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
         title="Edit Configuration"
         open={!!selectedStep}
         onClose={() => setSelectedStep(null)}
-        width={400}
+        width={500}
       >
-        {selectedStep && (
-          <div>
-            <Paragraph>Configuration form for: {selectedStep.name || selectedStep.action_type}</Paragraph>
-            <Paragraph>Type: {selectedStep.type}</Paragraph>
-            <Paragraph>Action Type: {selectedStep.action_type}</Paragraph>
-            {/* TODO: Implement dynamic form based on action type */}
-          </div>
-        )}
+        {selectedStep && (() => {
+          // Get the current step from workflow state to ensure we have the latest data
+          const currentStep = workflow?.actions.find(action => action.id === selectedStep.id);
+          const stepToUse = currentStep || selectedStep;
+          
+          return (
+            <div>
+              {stepToUse.action_type === 'Workflow::Trigger::Form' ? (
+                <FormTriggerConfig
+                  fields={stepToUse.config?.form_fields || []}
+                  onFieldsChange={handleFormFieldsChange}
+                />
+              ) : (
+                <div>
+                  <Paragraph>Configuration form for: {stepToUse.name || stepToUse.action_type}</Paragraph>
+                  <Paragraph>Type: {stepToUse.type}</Paragraph>
+                  <Paragraph>Action Type: {stepToUse.action_type}</Paragraph>
+                  {/* TODO: Implement dynamic form based on action type */}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </Drawer>
 
       <TriggerActionSelectionModal
