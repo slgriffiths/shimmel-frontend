@@ -1,0 +1,160 @@
+import { Form, Input, Select, InputNumber, Typography, Space } from 'antd';
+import { useEffect } from 'react';
+
+const { Title, Paragraph, Text } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
+
+interface GenerateTextConfig {
+  prompt?: string;
+  model?: string;
+  max_tokens?: number;
+  temperature?: number;
+  system_message?: string;
+}
+
+interface GenerateTextActionConfigProps {
+  config: GenerateTextConfig;
+  onConfigChange: (config: GenerateTextConfig) => void;
+}
+
+const AI_MODELS = [
+  { value: 'gpt-4', label: 'GPT-4', description: 'Most capable, best for complex tasks' },
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Fast and efficient for most tasks' },
+  { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet', description: 'Balanced performance and speed' },
+  { value: 'claude-3-haiku', label: 'Claude 3 Haiku', description: 'Fastest, good for simple tasks' },
+  { value: 'gemini-pro', label: 'Gemini Pro', description: 'Google\'s advanced model' }
+];
+
+export default function GenerateTextActionConfig({ config, onConfigChange }: GenerateTextActionConfigProps) {
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    form.setFieldsValue(config);
+  }, [config, form]);
+
+  const handleValuesChange = (changedValues: any, allValues: GenerateTextConfig) => {
+    onConfigChange(allValues);
+  };
+
+  return (
+    <div>
+      <Title level={4}>Generate Text Configuration</Title>
+      <Paragraph type="secondary">
+        Configure this action to generate text using AI models. The generated text will be available 
+        as output for use in subsequent workflow steps.
+      </Paragraph>
+
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{
+          model: 'gpt-4',
+          max_tokens: 1000,
+          temperature: 0.7,
+          ...config
+        }}
+        onValuesChange={handleValuesChange}
+      >
+        <Form.Item
+          name="prompt"
+          label="Text Prompt"
+          rules={[{ required: true, message: 'Please enter a prompt' }]}
+          extra="The prompt to send to the AI model. You can use template variables like {{form.fieldName}} or {{previousStep.outputField}}"
+        >
+          <TextArea
+            rows={4}
+            placeholder="Enter your text prompt..."
+            showCount
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="model"
+          label="AI Model"
+          rules={[{ required: true, message: 'Please select a model' }]}
+          extra="Choose which AI model to use for text generation"
+        >
+          <Select 
+            placeholder="Select AI model"
+            optionLabelProp="label"
+          >
+            {AI_MODELS.map(model => (
+              <Option 
+                key={model.value} 
+                value={model.value}
+                label={model.label}
+              >
+                <div style={{ padding: '4px 0' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
+                    {model.label}
+                  </div>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#666', 
+                    lineHeight: '1.3',
+                    whiteSpace: 'normal'
+                  }}>
+                    {model.description}
+                  </div>
+                </div>
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Space.Compact style={{ width: '100%' }}>
+          <Form.Item
+            name="max_tokens"
+            label="Maximum Tokens"
+            style={{ width: '50%' }}
+            extra="Maximum number of tokens to generate (1-8000)"
+          >
+            <InputNumber
+              min={1}
+              max={8000}
+              placeholder="1000"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="temperature"
+            label="Temperature"
+            style={{ width: '50%' }}
+            extra="Controls randomness (0.0 = deterministic, 2.0 = very random)"
+          >
+            <InputNumber
+              min={0}
+              max={2}
+              step={0.1}
+              placeholder="0.7"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+        </Space.Compact>
+
+        <Form.Item
+          name="system_message"
+          label="System Message"
+          extra="Optional system message to guide the AI's behavior and tone"
+        >
+          <TextArea
+            rows={2}
+            placeholder="You are a helpful assistant that..."
+          />
+        </Form.Item>
+      </Form>
+
+      <div style={{ marginTop: 24, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+        <Text strong style={{ color: '#389e0d' }}>Output Variables:</Text>
+        <ul style={{ margin: '8px 0 0 0', color: '#389e0d' }}>
+          <li><Text code>generated_text</Text> - The text generated by the AI model</li>
+          <li><Text code>token_count</Text> - Number of tokens used in generation</li>
+          <li><Text code>model_used</Text> - The actual model that processed the request</li>
+          <li><Text code>finish_reason</Text> - Reason why generation stopped</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

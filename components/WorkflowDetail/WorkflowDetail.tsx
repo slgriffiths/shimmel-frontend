@@ -8,6 +8,7 @@ import styles from './WorkflowDetail.module.scss';
 import { useWorkflow, TriggerType, ActionType } from '@/contexts/WorkflowContext';
 import TriggerActionSelectionModal from './TriggerActionSelectionModal';
 import FormTriggerConfig from './FormTriggerConfig';
+import ActionConfig from './ActionConfig';
 import { FormField } from './formFieldTypes';
 
 const { Title, Paragraph } = Typography;
@@ -17,11 +18,12 @@ interface WorkflowDetailProps {
 }
 
 export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
-  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction, updateAction } = useWorkflow();
+  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction, updateAction } =
+    useWorkflow();
   const { workflow, loading, error, selectedStep, triggerTypes, actionTypes } = state;
   const [selectionModal, setSelectionModal] = useState<{ open: boolean; mode: 'trigger' | 'action' }>({
     open: false,
-    mode: 'trigger'
+    mode: 'trigger',
   });
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" />
+        <Spin size='large' />
       </div>
     );
   }
@@ -71,7 +73,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       name: selectedType.name,
       config: {},
     };
-    
+
     addAction(newAction);
     setSelectionModal({ open: false, mode: 'trigger' });
   };
@@ -85,10 +87,17 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       console.log('Updating form fields:', fields);
       const updatedConfig = {
         ...selectedStep.config,
-        form_fields: fields
+        form_fields: fields,
       };
       console.log('Updated config:', updatedConfig);
       updateAction(selectedStep.id, { config: updatedConfig });
+    }
+  };
+
+  const handleActionConfigChange = (config: Record<string, any>) => {
+    if (selectedStep) {
+      console.log('Updating action config:', config);
+      updateAction(selectedStep.id, { config });
     }
   };
 
@@ -122,16 +131,9 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       <div className={styles.header}>
         <div>
           <Title level={2}>{workflow.name}</Title>
-          <Paragraph type="secondary">
-            Created on {new Date(workflow.created_at).toLocaleDateString()}
-          </Paragraph>
+          <Paragraph type='secondary'>Created on {new Date(workflow.created_at).toLocaleDateString()}</Paragraph>
         </div>
-        <Button 
-          type="primary" 
-          icon={<SaveOutlined />}
-          onClick={saveWorkflow}
-          loading={loading}
-        >
+        <Button type='primary' icon={<SaveOutlined />} onClick={saveWorkflow} loading={loading}>
           Save Workflow
         </Button>
       </div>
@@ -139,30 +141,28 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       <div className={styles.workflowBuilder}>
         {sortedActions.map((action, index) => (
           <div key={action.id} className={styles.actionContainer}>
-            <Card 
+            <Card
               className={`${styles.actionCard} ${styles[action.type]}`}
               onClick={() => handleCardClick(action)}
               hoverable
               actions={[
-                <Dropdown 
-                  key="more"
+                <Dropdown
+                  key='more'
                   menu={{ items: getActionMenuItems(action) }}
                   trigger={['click']}
-                  placement="bottomRight"
+                  placement='bottomRight'
                 >
-                  <Button type="text" icon={<MoreOutlined />} />
-                </Dropdown>
+                  <Button type='text' icon={<MoreOutlined />} />
+                </Dropdown>,
               ]}
             >
               <div className={styles.actionHeader}>
-                <span className={styles.actionType}>
-                  {action.type === 'trigger' ? 'Trigger' : 'Action'}
-                </span>
+                <span className={styles.actionType}>{action.type === 'trigger' ? 'Trigger' : 'Action'}</span>
                 <Title level={4} className={styles.actionTitle}>
                   {action.name || action.action_type}
                 </Title>
               </div>
-              <Paragraph type="secondary" className={styles.actionDescription}>
+              <Paragraph type='secondary' className={styles.actionDescription}>
                 {action.action_type}
               </Paragraph>
             </Card>
@@ -172,16 +172,11 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
                 <div className={styles.connectorLine}></div>
               </div>
             )}
-            
+
             {index === sortedActions.length - 1 && (
               <div className={styles.addActionContainer}>
                 <div className={styles.connectorLine}></div>
-                <Button 
-                  type="dashed" 
-                  shape="circle" 
-                  icon={<PlusOutlined />}
-                  onClick={handleAddAction}
-                />
+                <Button type='dashed' icon={<PlusOutlined />} onClick={handleAddAction} />
               </div>
             )}
           </div>
@@ -191,46 +186,46 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
           <div className={styles.emptyState}>
             <Title level={4}>No triggers or actions yet</Title>
             <Paragraph>Start building your workflow by adding a trigger.</Paragraph>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />}
-              onClick={handleAddTrigger}
-            >
+            <Button type='primary' icon={<PlusOutlined />} onClick={handleAddTrigger}>
               Add Trigger
             </Button>
           </div>
         )}
       </div>
 
-      <Drawer
-        title="Edit Configuration"
-        open={!!selectedStep}
-        onClose={() => setSelectedStep(null)}
-        width={500}
-      >
-        {selectedStep && (() => {
-          // Get the current step from workflow state to ensure we have the latest data
-          const currentStep = workflow?.actions.find(action => action.id === selectedStep.id);
-          const stepToUse = currentStep || selectedStep;
-          
-          return (
-            <div>
-              {stepToUse.action_type === 'Workflow::Trigger::Form' ? (
-                <FormTriggerConfig
-                  fields={stepToUse.config?.form_fields || []}
-                  onFieldsChange={handleFormFieldsChange}
-                />
-              ) : (
-                <div>
-                  <Paragraph>Configuration form for: {stepToUse.name || stepToUse.action_type}</Paragraph>
-                  <Paragraph>Type: {stepToUse.type}</Paragraph>
-                  <Paragraph>Action Type: {stepToUse.action_type}</Paragraph>
-                  {/* TODO: Implement dynamic form based on action type */}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+      <Drawer title='Edit Configuration' open={!!selectedStep} onClose={() => setSelectedStep(null)} width={600}>
+        {selectedStep &&
+          (() => {
+            // Get the current step from workflow state to ensure we have the latest data
+            const currentStep = workflow?.actions.find((action) => action.id === selectedStep.id);
+            const stepToUse = currentStep || selectedStep;
+
+            return (
+              <div>
+                {stepToUse.action_type === 'Workflow::Trigger::Form' ? (
+                  <FormTriggerConfig
+                    fields={stepToUse.config?.form_fields || []}
+                    onFieldsChange={handleFormFieldsChange}
+                  />
+                ) : stepToUse.type === 'action' ? (
+                  <ActionConfig
+                    actionType={stepToUse.action_type}
+                    config={stepToUse.config || {}}
+                    onConfigChange={handleActionConfigChange}
+                  />
+                ) : (
+                  <div>
+                    <Paragraph>Configuration form for: {stepToUse.name || stepToUse.action_type}</Paragraph>
+                    <Paragraph>Type: {stepToUse.type}</Paragraph>
+                    <Paragraph>Action Type: {stepToUse.action_type}</Paragraph>
+                    <Paragraph type='secondary'>
+                      This trigger type doesn't have a custom configuration form yet.
+                    </Paragraph>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
       </Drawer>
 
       <TriggerActionSelectionModal

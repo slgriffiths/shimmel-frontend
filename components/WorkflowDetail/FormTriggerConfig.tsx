@@ -21,6 +21,11 @@ export default function FormTriggerConfig({ fields, onFieldsChange }: FormTrigge
     setShowTypeSelector(false);
   };
 
+  const handleAddFirstField = () => {
+    const newField = createNewField('text', 0);
+    setEditingField(newField);
+  };
+
   const handleEditField = (field: FormField) => {
     setEditingField(field);
   };
@@ -87,7 +92,7 @@ export default function FormTriggerConfig({ fields, onFieldsChange }: FormTrigge
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
-            onClick={() => setShowTypeSelector(true)}
+            onClick={handleAddFirstField}
           >
             Add First Field
           </Button>
