@@ -13,6 +13,7 @@ import {
   LogoutOutlined,
   PlusOutlined,
   FolderOpenOutlined,
+  BranchesOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -125,6 +126,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       icon: <FolderOpenOutlined />,
       label: 'Projects',
       children: navProjects,
+    },
+    {
+      key: 'workflows-menu',
+      icon: <BranchesOutlined />,
+      label: 'Workflows',
+      onClick: () => router.push('/workflows'),
     },
     // {
     //   key: "3",

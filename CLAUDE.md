@@ -70,6 +70,20 @@ npm run lint        # ESLint with Next.js rules
 - Layout includes collapsible sidebar with navigation and user profile
 - Uses Ant Design components extensively with custom styling
 
+### Directory Structure & Component Patterns
+- **Component Organization**: Each component lives in its own directory under `/components/ComponentName/`
+- **File Naming**: Components use PascalCase (e.g., `WorkflowDetail.tsx`)
+- **Co-located Files**: All related files are siblings within the component directory:
+  - `ComponentName.tsx` - Main component file
+  - `ComponentName.module.scss` - SCSS module for styling
+  - `columns.tsx` - For table components, column definitions live separately
+  - `utils.ts` - Component-specific utilities (when needed)
+  - Tests and other assets are also co-located as siblings
+- **Parent Directories**: Related components are grouped under parent directories (e.g., `Workflows/` contains workflow-related components)
+- **Module SCSS**: Always use SCSS modules with camelCase class names
+- **Ant Design Preference**: Prefer Ant Design components over custom implementations
+- **Table Pattern**: For tables, separate column definitions into `columns.tsx` files as siblings to the main component
+
 ### State Management
 - React Query for server state and API calls
 - React Context for user authentication state
