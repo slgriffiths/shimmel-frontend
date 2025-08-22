@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Typography, Spin, Button, Card, Dropdown, Drawer } from 'antd';
 import { SaveOutlined, MoreOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import styles from './WorkflowDetail.module.scss';
-import { useWorkflow } from '@/contexts/WorkflowContext';
+import { useWorkflow, TriggerType, ActionType } from '@/contexts/WorkflowContext';
+import TriggerActionSelectionModal from './TriggerActionSelectionModal';
 
 const { Title, Paragraph } = Typography;
 
@@ -14,14 +15,19 @@ interface WorkflowDetailProps {
 }
 
 export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
-  const { state, fetchWorkflow, saveWorkflow, setSelectedStep } = useWorkflow();
-  const { workflow, loading, error, selectedStep } = state;
+  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction } = useWorkflow();
+  const { workflow, loading, error, selectedStep, triggerTypes, actionTypes } = state;
+  const [selectionModal, setSelectionModal] = useState<{ open: boolean; mode: 'trigger' | 'action' }>({
+    open: false,
+    mode: 'trigger'
+  });
 
   useEffect(() => {
     if (workflowId) {
       fetchWorkflow(workflowId);
+      fetchTriggerAndActionTypes();
     }
-  }, [workflowId, fetchWorkflow]);
+  }, [workflowId, fetchWorkflow, fetchTriggerAndActionTypes]);
 
   if (loading) {
     return (
@@ -48,6 +54,30 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     setSelectedStep(action);
   };
 
+  const handleAddTrigger = () => {
+    setSelectionModal({ open: true, mode: 'trigger' });
+  };
+
+  const handleAddAction = () => {
+    setSelectionModal({ open: true, mode: 'action' });
+  };
+
+  const handleTypeSelection = (selectedType: TriggerType | ActionType) => {
+    const newAction = {
+      type: selectionModal.mode,
+      action_type: selectedType.type,
+      name: selectedType.name,
+      config: {},
+    };
+    
+    addAction(newAction);
+    setSelectionModal({ open: false, mode: 'trigger' });
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionModal({ open: false, mode: 'trigger' });
+  };
+
   const getActionMenuItems = (action: any): MenuProps['items'] => [
     {
       key: 'edit',
@@ -65,12 +95,12 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     },
   ];
 
-  // Sort actions by order, with triggers first
+  // Sort actions by position, with triggers first
   const sortedActions = [...(workflow.actions || [])].sort((a, b) => {
     if (a.type !== b.type) {
       return a.type === 'trigger' ? -1 : 1;
     }
-    return a.order - b.order;
+    return a.position - b.position;
   });
 
   return (
@@ -136,11 +166,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
                   type="dashed" 
                   shape="circle" 
                   icon={<PlusOutlined />}
-                  className={styles.addActionButton}
-                  onClick={() => {
-                    // TODO: Open action selector
-                    console.log('Add new action');
-                  }}
+                  onClick={handleAddAction}
                 />
               </div>
             )}
@@ -154,10 +180,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
             <Button 
               type="primary" 
               icon={<PlusOutlined />}
-              onClick={() => {
-                // TODO: Open trigger selector
-                console.log('Add first trigger');
-              }}
+              onClick={handleAddTrigger}
             >
               Add Trigger
             </Button>
@@ -180,6 +203,15 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
           </div>
         )}
       </Drawer>
+
+      <TriggerActionSelectionModal
+        open={selectionModal.open}
+        mode={selectionModal.mode}
+        triggerTypes={triggerTypes}
+        actionTypes={actionTypes}
+        onSelect={handleTypeSelection}
+        onCancel={handleCancelSelection}
+      />
     </div>
   );
 }
