@@ -5,9 +5,16 @@ import { api } from '@/lib/api';
 import { message as antdMessage } from 'antd';
 
 // Types - backend will provide trigger/action definitions
+export interface WorkflowTrigger {
+  id: string;
+  action_type: string;
+  name?: string;
+  config: Record<string, any>;
+  position: number;
+}
+
 export interface WorkflowAction {
   id: string;
-  type: 'trigger' | 'action';
   action_type: string;
   name?: string;
   config: Record<string, any>;
@@ -45,6 +52,7 @@ export interface Workflow {
   name: string;
   description?: string;
   status: string;
+  triggers: WorkflowTrigger[];
   actions: WorkflowAction[];
   created_at: string;
   updated_at: string;
@@ -55,11 +63,14 @@ type WorkflowContextAction =
   | { type: 'SET_WORKFLOW'; payload: Workflow }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'UPDATE_TRIGGER'; payload: { triggerId: string; updates: Partial<WorkflowTrigger> } }
   | { type: 'UPDATE_ACTION'; payload: { actionId: string; updates: Partial<WorkflowAction> } }
+  | { type: 'ADD_TRIGGER'; payload: WorkflowTrigger }
   | { type: 'ADD_ACTION'; payload: WorkflowAction }
+  | { type: 'DELETE_TRIGGER'; payload: string }
   | { type: 'DELETE_ACTION'; payload: string }
   | { type: 'UPDATE_WORKFLOW_META'; payload: Partial<Pick<Workflow, 'name' | 'description' | 'status'>> }
-  | { type: 'SET_SELECTED_STEP'; payload: WorkflowAction | null }
+  | { type: 'SET_SELECTED_STEP'; payload: (WorkflowTrigger | WorkflowAction) | null }
   | { type: 'SET_TRIGGER_TYPES'; payload: TriggerType[] }
   | { type: 'SET_ACTION_TYPES'; payload: ActionType[] };
 
@@ -68,7 +79,7 @@ interface WorkflowState {
   workflow: Workflow | null;
   loading: boolean;
   error: string | null;
-  selectedStep: WorkflowAction | null;
+  selectedStep: (WorkflowTrigger | WorkflowAction) | null;
   triggerTypes: TriggerType[];
   actionTypes: ActionType[];
 }
@@ -103,6 +114,19 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         error: action.payload,
         loading: false,
       };
+    case 'UPDATE_TRIGGER':
+      if (!state.workflow) return state;
+      return {
+        ...state,
+        workflow: {
+          ...state.workflow,
+          triggers: state.workflow.triggers.map(trigger =>
+            trigger.id === action.payload.triggerId
+              ? { ...trigger, ...action.payload.updates }
+              : trigger
+          ),
+        },
+      };
     case 'UPDATE_ACTION':
       if (!state.workflow) return state;
       return {
@@ -116,6 +140,15 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
           ),
         },
       };
+    case 'ADD_TRIGGER':
+      if (!state.workflow) return state;
+      return {
+        ...state,
+        workflow: {
+          ...state.workflow,
+          triggers: [...(state.workflow.triggers || []), action.payload].sort((a, b) => a.position - b.position),
+        },
+      };
     case 'ADD_ACTION':
       if (!state.workflow) return state;
       return {
@@ -123,6 +156,15 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         workflow: {
           ...state.workflow,
           actions: [...(state.workflow.actions || []), action.payload].sort((a, b) => a.position - b.position),
+        },
+      };
+    case 'DELETE_TRIGGER':
+      if (!state.workflow) return state;
+      return {
+        ...state,
+        workflow: {
+          ...state.workflow,
+          triggers: (state.workflow.triggers || []).filter(trigger => trigger.id !== action.payload),
         },
       };
     case 'DELETE_ACTION':
@@ -169,11 +211,14 @@ interface WorkflowContextType {
   fetchWorkflow: (id: string) => Promise<void>;
   fetchTriggerAndActionTypes: () => Promise<void>;
   saveWorkflow: () => Promise<void>;
+  updateTrigger: (triggerId: string, updates: Partial<WorkflowTrigger>) => void;
   updateAction: (actionId: string, updates: Partial<WorkflowAction>) => void;
+  addTrigger: (trigger: Omit<WorkflowTrigger, 'id' | 'position'>) => void;
   addAction: (action: Omit<WorkflowAction, 'id' | 'position'>) => void;
+  deleteTrigger: (triggerId: string) => void;
   deleteAction: (actionId: string) => void;
   updateWorkflowMeta: (updates: Partial<Pick<Workflow, 'name' | 'description' | 'status'>>) => void;
-  setSelectedStep: (step: WorkflowAction | null) => void;
+  setSelectedStep: (step: (WorkflowTrigger | WorkflowAction) | null) => void;
 }
 
 // Create context
@@ -225,8 +270,8 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
         workflow: {
           name: state.workflow.name,
           description: state.workflow.description,
-          status: state.workflow.status,
-          actions: state.workflow.actions,
+          triggers_attributes: state.workflow.triggers || [],
+          actions_attributes: state.workflow.actions || [],
         },
       });
       dispatch({ type: 'SET_WORKFLOW', payload: data });
@@ -240,8 +285,21 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     }
   };
 
+  const updateTrigger = (triggerId: string, updates: Partial<WorkflowTrigger>) => {
+    dispatch({ type: 'UPDATE_TRIGGER', payload: { triggerId, updates } });
+  };
+
   const updateAction = (actionId: string, updates: Partial<WorkflowAction>) => {
     dispatch({ type: 'UPDATE_ACTION', payload: { actionId, updates } });
+  };
+
+  const addTrigger = (trigger: Omit<WorkflowTrigger, 'id' | 'position'>) => {
+    const newTrigger: WorkflowTrigger = {
+      ...trigger,
+      id: `trigger_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      position: state.workflow ? (state.workflow.triggers || []).length : 0,
+    };
+    dispatch({ type: 'ADD_TRIGGER', payload: newTrigger });
   };
 
   const addAction = (action: Omit<WorkflowAction, 'id' | 'position'>) => {
@@ -253,6 +311,10 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     dispatch({ type: 'ADD_ACTION', payload: newAction });
   };
 
+  const deleteTrigger = (triggerId: string) => {
+    dispatch({ type: 'DELETE_TRIGGER', payload: triggerId });
+  };
+
   const deleteAction = (actionId: string) => {
     dispatch({ type: 'DELETE_ACTION', payload: actionId });
   };
@@ -261,7 +323,7 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     dispatch({ type: 'UPDATE_WORKFLOW_META', payload: updates });
   };
 
-  const setSelectedStep = (step: WorkflowAction | null) => {
+  const setSelectedStep = (step: (WorkflowTrigger | WorkflowAction) | null) => {
     dispatch({ type: 'SET_SELECTED_STEP', payload: step });
   };
 
@@ -272,8 +334,11 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
         fetchWorkflow,
         fetchTriggerAndActionTypes,
         saveWorkflow,
+        updateTrigger,
         updateAction,
+        addTrigger,
         addAction,
+        deleteTrigger,
         deleteAction,
         updateWorkflowMeta,
         setSelectedStep,

@@ -8,7 +8,6 @@ export default function ProjectChatPage() {
   const projectId = typeof params?.project_id === 'string' ? parseInt(params.project_id, 10) : undefined;
   const assistantId = typeof params?.assistant_id === 'string' ? parseInt(params.assistant_id, 10) : 1;
 
-  console.log('Building conversation in project:', params?.project_id);
   return (
     <>
       <AssistantChat assistantId={assistantId} projectId={projectId} />

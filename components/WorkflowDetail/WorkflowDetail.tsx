@@ -18,7 +18,7 @@ interface WorkflowDetailProps {
 }
 
 export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
-  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addAction, updateAction } =
+  const { state, fetchWorkflow, fetchTriggerAndActionTypes, saveWorkflow, setSelectedStep, addTrigger, addAction, updateTrigger, updateAction } =
     useWorkflow();
   const { workflow, loading, error, selectedStep, triggerTypes, actionTypes } = state;
   const [selectionModal, setSelectionModal] = useState<{ open: boolean; mode: 'trigger' | 'action' }>({
@@ -67,14 +67,18 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
   };
 
   const handleTypeSelection = (selectedType: TriggerType | ActionType) => {
-    const newAction = {
-      type: selectionModal.mode,
+    const newItem = {
       action_type: selectedType.type,
       name: selectedType.name,
       config: {},
     };
 
-    addAction(newAction);
+    if (selectionModal.mode === 'trigger') {
+      addTrigger(newItem);
+    } else {
+      addAction(newItem);
+    }
+    
     setSelectionModal({ open: false, mode: 'trigger' });
   };
 
@@ -90,14 +94,26 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
         form_fields: fields,
       };
       console.log('Updated config:', updatedConfig);
-      updateAction(selectedStep.id, { config: updatedConfig });
+      
+      // Check if this is a trigger or action by looking at action_type
+      if (selectedStep.action_type?.includes('Trigger')) {
+        updateTrigger(selectedStep.id, { config: updatedConfig });
+      } else {
+        updateAction(selectedStep.id, { config: updatedConfig });
+      }
     }
   };
 
   const handleActionConfigChange = (config: Record<string, any>) => {
     if (selectedStep) {
       console.log('Updating action config:', config);
-      updateAction(selectedStep.id, { config });
+      
+      // Check if this is a trigger or action by looking at action_type
+      if (selectedStep.action_type?.includes('Trigger')) {
+        updateTrigger(selectedStep.id, { config });
+      } else {
+        updateAction(selectedStep.id, { config });
+      }
     }
   };
 
@@ -118,8 +134,11 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     },
   ];
 
-  // Sort actions by position, with triggers first
-  const sortedActions = [...(workflow.actions || [])].sort((a, b) => {
+  // Combine triggers and actions for display, with triggers first
+  const allSteps = [
+    ...(workflow.triggers || []).map(trigger => ({ ...trigger, type: 'trigger' })),
+    ...(workflow.actions || []).map(action => ({ ...action, type: 'action' }))
+  ].sort((a, b) => {
     if (a.type !== b.type) {
       return a.type === 'trigger' ? -1 : 1;
     }
@@ -139,16 +158,16 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       </div>
 
       <div className={styles.workflowBuilder}>
-        {sortedActions.map((action, index) => (
-          <div key={action.id} className={styles.actionContainer}>
+        {allSteps.map((step, index) => (
+          <div key={step.id} className={styles.actionContainer}>
             <Card
-              className={`${styles.actionCard} ${styles[action.type]}`}
-              onClick={() => handleCardClick(action)}
+              className={`${styles.actionCard} ${styles[step.type]}`}
+              onClick={() => handleCardClick(step)}
               hoverable
               actions={[
                 <Dropdown
                   key='more'
-                  menu={{ items: getActionMenuItems(action) }}
+                  menu={{ items: getActionMenuItems(step) }}
                   trigger={['click']}
                   placement='bottomRight'
                 >
@@ -157,23 +176,23 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
               ]}
             >
               <div className={styles.actionHeader}>
-                <span className={styles.actionType}>{action.type === 'trigger' ? 'Trigger' : 'Action'}</span>
+                <span className={styles.actionType}>{step.type === 'trigger' ? 'Trigger' : 'Action'}</span>
                 <Title level={4} className={styles.actionTitle}>
-                  {action.name || action.action_type}
+                  {step.name || step.action_type}
                 </Title>
               </div>
               <Paragraph type='secondary' className={styles.actionDescription}>
-                {action.action_type}
+                {step.action_type}
               </Paragraph>
             </Card>
 
-            {index < sortedActions.length - 1 && (
+            {index < allSteps.length - 1 && (
               <div className={styles.connector}>
                 <div className={styles.connectorLine}></div>
               </div>
             )}
 
-            {index === sortedActions.length - 1 && (
+            {index === allSteps.length - 1 && (
               <div className={styles.addActionContainer}>
                 <div className={styles.connectorLine}></div>
                 <Button type='dashed' icon={<PlusOutlined />} onClick={handleAddAction} />
@@ -182,7 +201,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
           </div>
         ))}
 
-        {sortedActions.length === 0 && (
+        {allSteps.length === 0 && (
           <div className={styles.emptyState}>
             <Title level={4}>No triggers or actions yet</Title>
             <Paragraph>Start building your workflow by adding a trigger.</Paragraph>
@@ -197,8 +216,16 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
         {selectedStep &&
           (() => {
             // Get the current step from workflow state to ensure we have the latest data
-            const currentStep = workflow?.actions.find((action) => action.id === selectedStep.id);
-            const stepToUse = currentStep || selectedStep;
+            // Check if selectedStep is a trigger or action to find in the right array
+            const isTrigger = selectedStep.action_type?.includes('Trigger');
+            const currentStep = isTrigger
+              ? workflow?.triggers.find((trigger) => trigger.id === selectedStep.id)
+              : workflow?.actions.find((action) => action.id === selectedStep.id);
+            
+            // Ensure the step has the correct type property for the UI logic
+            const stepToUse = currentStep 
+              ? { ...currentStep, type: isTrigger ? 'trigger' : 'action' }
+              : selectedStep;
 
             return (
               <div>
