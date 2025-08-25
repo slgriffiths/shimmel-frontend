@@ -118,7 +118,7 @@ export default function FormTriggerConfig({ fields, onFieldsChange }: FormTrigge
                   title={
                     <Space>
                       <Text strong>{field.label}</Text>
-                      {field.required && <Tag color="red" size="small">Required</Tag>}
+                      {field.required && <Tag color="red">Required</Tag>}
                       <Tag color="blue">{getFieldTypeDefinition(field.type)?.name}</Tag>
                     </Space>
                   }
