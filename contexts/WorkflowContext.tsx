@@ -55,6 +55,13 @@ export interface Workflow {
   status: string;
   triggers: WorkflowTrigger[];
   actions: WorkflowAction[];
+  available_llm_models?: Array<{
+    id?: string;
+    value?: string;
+    name?: string;
+    label?: string;
+    description?: string;
+  }>;
   created_at: string;
   updated_at: string;
 }

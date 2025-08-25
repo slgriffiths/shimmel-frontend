@@ -13,7 +13,7 @@ This is a Next.js 15 frontend application that connects to a Rails 8 API backend
 - **Execution Flow**: Each step runs as a background job, and upon completion triggers the next step
 - **AI Integration**: Steps like "Generate Text" allow users to select AI models (Claude versions, ChatGPT versions, Gemini, etc.) and provide prompts as input
 
-The app also includes chat/conversation features with research assistants, projects, and user management. UI built with React 19, TypeScript, Ant Design components, and SCSS for styling.
+The app includes workflow automation with triggers, actions, and execution monitoring. UI built with React 19, TypeScript, Ant Design components, and SCSS for styling.
 
 ## Tech Stack
 
@@ -60,13 +60,13 @@ npm run lint        # ESLint with Next.js rules
 
 ### Routing Structure
 - App Router with nested layouts
-- Main routes: `/dashboard`, `/projects`, `/chat`, `/admin`
-- Dynamic routes: `/chat/[uuid]`, `/projects/[id]`, `/chat/projects/[project_id]/new/[assistant_id]`
+- Main routes: `/dashboard`, `/projects`, `/workflows`, `/admin`
+- Dynamic routes: `/workflows/[id]`, `/projects/[id]`
 - Authentication redirects handled in root layout
 
 ### Component Architecture
 - Components in `/components` with co-located SCSS modules
-- Main chat component: `AssistantChat` handles conversation flow
+- Main workflow component: `WorkflowDetail` handles workflow building and execution
 - Layout includes collapsible sidebar with navigation and user profile
 - Uses Ant Design components extensively with custom styling
 
@@ -101,7 +101,7 @@ npm run lint        # ESLint with Next.js rules
 - `app/layout.tsx` - Root layout with sidebar navigation and auth wrapper
 - `lib/api.ts` - Axios instance with interceptors for token refresh
 - `hooks/useAuth.ts` - Authentication logic and user management
-- `components/AssistantChat/` - Main chat interface component
+- `components/WorkflowDetail/` - Main workflow builder and execution interface
 - `contexts/UserContext.tsx` - User data provider
 - `app/globals.scss` - Global styles and CSS resets
 
@@ -122,9 +122,9 @@ Required environment variables:
 
 - All API calls use the configured axios instance from `lib/api.ts`
 - Error handling includes automatic token refresh logic
-- Conversations are fetched using OpenAI thread IDs
-- File uploads supported through Ant Design Upload component
-- Real-time message updates through polling or WebSocket (implementation in AssistantChat)
+- Workflow executions are monitored through polling with 5-second intervals
+- Form triggers support dynamic field types with validation
+- Real-time run status updates through REST API polling
 
 ## Workflow System Architecture
 

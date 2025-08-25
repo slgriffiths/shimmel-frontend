@@ -1,5 +1,6 @@
 import { Form, Input, Select, InputNumber, Typography, Space } from 'antd';
 import { useEffect } from 'react';
+import { useWorkflow } from '@/contexts/WorkflowContext';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -18,16 +19,13 @@ interface GenerateTextActionConfigProps {
   onConfigChange: (config: GenerateTextConfig) => void;
 }
 
-const AI_MODELS = [
-  { value: 'gpt-4', label: 'GPT-4', description: 'Most capable, best for complex tasks' },
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Fast and efficient for most tasks' },
-  { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet', description: 'Balanced performance and speed' },
-  { value: 'claude-3-haiku', label: 'Claude 3 Haiku', description: 'Fastest, good for simple tasks' },
-  { value: 'gemini-pro', label: 'Gemini Pro', description: 'Google\'s advanced model' }
-];
-
 export default function GenerateTextActionConfig({ config, onConfigChange }: GenerateTextActionConfigProps) {
   const [form] = Form.useForm();
+  const { state } = useWorkflow();
+  const { workflow } = state;
+
+  // Get available models from the serialized workflow object
+  const availableModels = workflow?.available_llm_models || [];
 
   useEffect(() => {
     form.setFieldsValue(config);
@@ -49,7 +47,7 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
         form={form}
         layout="vertical"
         initialValues={{
-          model: 'gpt-4',
+          model: availableModels.length > 0 ? availableModels[0].value : '',
           max_tokens: 1000,
           temperature: 0.7,
           ...config
@@ -79,24 +77,26 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
             placeholder="Select AI model"
             optionLabelProp="label"
           >
-            {AI_MODELS.map(model => (
+            {availableModels.map(model => (
               <Option 
-                key={model.value} 
-                value={model.value}
-                label={model.label}
+                key={model.value || model.id} 
+                value={model.value || model.id}
+                label={model.label || model.name}
               >
                 <div style={{ padding: '4px 0' }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
-                    {model.label}
+                    {model.label || model.name}
                   </div>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: '#666', 
-                    lineHeight: '1.3',
-                    whiteSpace: 'normal'
-                  }}>
-                    {model.description}
-                  </div>
+                  {model.description && (
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: '#666', 
+                      lineHeight: '1.3',
+                      whiteSpace: 'normal'
+                    }}>
+                      {model.description}
+                    </div>
+                  )}
                 </div>
               </Option>
             ))}
