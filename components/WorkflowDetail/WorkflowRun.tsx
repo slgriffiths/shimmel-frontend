@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, Form, Input, Select, InputNumber, DatePicker, Upload, Checkbox, Radio, Card, Steps, Collapse, Alert, Spin } from 'antd';
+import { Typography, Button, Form, Input, Select, InputNumber, DatePicker, Upload, Checkbox, Radio, Card, Steps, Collapse, Alert, Spin, Progress } from 'antd';
 import { PlayCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { api } from '@/lib/api';
@@ -13,22 +13,27 @@ interface WorkflowRunProps {
 }
 
 interface RunStep {
-  id: string;
-  name: string;
-  type: string;
+  step_number: number;
+  action_name: string;
+  action_type: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
-  error_message?: string;
   started_at?: string;
   completed_at?: string;
+  duration?: number;
+  error_message?: string;
 }
 
 interface WorkflowRunData {
   id: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
+  workflow_id: number;
+  workflow_name: string;
+  steps_count: number;
+  current_step?: number;
+  total_steps: number;
+  progress_percentage: number;
+  input_data: Record<string, any>;
   steps: RunStep[];
-  started_at?: string;
-  completed_at?: string;
-  error_message?: string;
 }
 
 export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
@@ -254,34 +259,48 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
       ) : (
         // Show run progress if run has started
         <div>
-          <Card title="Workflow Execution" style={{ marginBottom: '24px' }}>
+          <Card title={`Executing: ${runData.workflow_name}`} style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <Text strong>Status: </Text>
               <Text style={{ marginLeft: '8px' }}>
                 {runData.status === 'running' && <><Spin size="small" style={{ marginRight: '8px' }} />Running...</>}
                 {runData.status === 'completed' && <><CheckCircleOutlined style={{ color: '#52c41a', marginRight: '8px' }} />Completed</>}
                 {runData.status === 'failed' && <><ExclamationCircleOutlined style={{ color: '#f5222d', marginRight: '8px' }} />Failed</>}
-                {runData.status === 'pending' && <>Pending...</>}
+                {runData.status === 'pending' && <><LoadingOutlined style={{ marginRight: '8px' }} />Starting...</>}
               </Text>
             </div>
             
-            {runData.started_at && (
-              <Text type="secondary">
-                Started: {new Date(runData.started_at).toLocaleString()}
-              </Text>
-            )}
+            <div style={{ marginBottom: '16px' }}>
+              <Text strong>Progress: </Text>
+              <Text>{runData.current_step || 0} of {runData.total_steps} steps</Text>
+              <Progress 
+                percent={runData.progress_percentage} 
+                status={runData.status === 'failed' ? 'exception' : runData.status === 'completed' ? 'success' : 'active'}
+                style={{ marginTop: '8px' }}
+              />
+            </div>
+            
+            <Text type="secondary">
+              Run ID: {runData.id} • Total Steps: {runData.total_steps}
+            </Text>
           </Card>
 
           <Card title="Execution Steps">
-            <Steps direction="vertical" current={-1}>
+            <Steps direction="vertical" current={runData.current_step ? runData.current_step - 1 : -1}>
               {runData.steps?.map((step, index) => (
                 <Steps.Step
-                  key={step.id}
-                  title={step.name}
-                  description={step.type}
+                  key={step.step_number}
+                  title={`${step.step_number}. ${step.action_name}`}
+                  description={step.action_type}
                   status={step.status === 'failed' ? 'error' : step.status === 'completed' ? 'finish' : step.status === 'running' ? 'process' : 'wait'}
                   icon={getStepIcon(step.status)}
-                  subTitle={step.completed_at ? `Completed: ${new Date(step.completed_at).toLocaleString()}` : undefined}
+                  subTitle={
+                    step.completed_at 
+                      ? `Completed: ${new Date(step.completed_at).toLocaleString()}${step.duration ? ` (${step.duration}ms)` : ''}` 
+                      : step.started_at 
+                      ? `Started: ${new Date(step.started_at).toLocaleString()}`
+                      : undefined
+                  }
                 />
               ))}
             </Steps>
@@ -295,8 +314,8 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
                     .filter(step => step.status === 'failed')
                     .map(step => (
                       <Collapse.Panel 
-                        key={step.id} 
-                        header={`${step.name} - Error`}
+                        key={step.step_number} 
+                        header={`Step ${step.step_number}: ${step.action_name} - Error`}
                         extra={<ExclamationCircleOutlined style={{ color: '#f5222d' }} />}
                       >
                         <Alert
@@ -305,6 +324,11 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
                           type="error"
                           showIcon
                         />
+                        {step.duration && (
+                          <Text type="secondary" style={{ display: 'block', marginTop: '8px' }}>
+                            Duration: {step.duration}ms
+                          </Text>
+                        )}
                       </Collapse.Panel>
                     ))}
                 </Collapse>
