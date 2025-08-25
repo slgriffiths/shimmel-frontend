@@ -2,6 +2,7 @@
 import '@ant-design/v5-patch-for-react-19';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import Head from 'next/head';
 import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin, Tooltip } from 'antd';
 import { UserProvider } from '@/contexts/UserContext';
 import {
@@ -91,6 +92,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   if (isAuthRoute || isErrorRoute) {
     return (
       <html lang='en' style={{ margin: 0, padding: 0 }}>
+        <Head>
+          <title>Shimmel AI</title>
+        </Head>
         <body style={{ margin: 0, padding: 0 }}>
           <UserProvider>
             {children}
@@ -103,6 +107,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   if (isLoading) {
     return (
       <html lang='en' style={{ margin: 0, padding: 0 }}>
+        <Head>
+          <title>Shimmel AI</title>
+        </Head>
         <body style={{ margin: 0, padding: 0 }}>
           <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <Spin size='large' />
@@ -166,6 +173,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang='en' style={{ margin: 0, padding: 0 }}>
+      <Head>
+        <title>Shimmel AI</title>
+      </Head>
       <body style={{ margin: 0, padding: 0 }}>
         <UserProvider>
           <Layout style={{ minHeight: '100vh' }}>
