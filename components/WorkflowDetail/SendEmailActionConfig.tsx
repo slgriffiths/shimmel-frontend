@@ -7,9 +7,10 @@ const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 
 interface SendEmailConfig {
-  send_to?: string;
+  to?: string;
   subject?: string;
-  email_body?: string;
+  body?: string;
+  body_type?: string;
 }
 
 interface SendEmailActionConfigProps {
@@ -24,14 +25,15 @@ export default function SendEmailActionConfig({ config, onConfigChange }: SendEm
     extensions: [
       StarterKit,
     ],
-    content: config.email_body || '',
+    content: config.body || '',
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       const currentValues = form.getFieldsValue();
       const updatedConfig = {
         ...currentValues,
-        email_body: html,
+        body: html,
+        body_type: 'html',
       };
       onConfigChange(updatedConfig);
     },
@@ -39,15 +41,16 @@ export default function SendEmailActionConfig({ config, onConfigChange }: SendEm
 
   useEffect(() => {
     form.setFieldsValue(config);
-    if (editor && config.email_body !== undefined) {
-      editor.commands.setContent(config.email_body);
+    if (editor && config.body !== undefined) {
+      editor.commands.setContent(config.body);
     }
   }, [config, form, editor]);
 
   const handleValuesChange = (changedValues: any, allValues: SendEmailConfig) => {
     const updatedConfig = {
       ...allValues,
-      email_body: config.email_body, // Keep the current HTML from the editor
+      body: config.body, // Keep the current HTML from the editor
+      body_type: 'html',
     };
     onConfigChange(updatedConfig);
   };
@@ -64,14 +67,15 @@ export default function SendEmailActionConfig({ config, onConfigChange }: SendEm
         form={form}
         layout="vertical"
         initialValues={{
-          send_to: '',
+          to: '',
           subject: '',
+          body_type: 'html',
           ...config
         }}
         onValuesChange={handleValuesChange}
       >
         <Form.Item
-          name="send_to"
+          name="to"
           label={<Text strong>Send To</Text>}
           rules={[{ required: true, message: 'Please enter recipient email address' }]}
           extra="Email address of the recipient. You can use template variables like {{form.email}} or {{previousStep.userEmail}}"

@@ -266,12 +266,49 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
+      // Transform triggers to match backend format
+      const triggersAttributes = (state.workflow.triggers || []).map(trigger => ({
+        id: typeof trigger.id === 'string' && trigger.id.startsWith('trigger_') ? undefined : trigger.id,
+        type: trigger.action_type, // Use full class name
+        name: trigger.name,
+        description: trigger.description,
+        enabled: trigger.enabled !== undefined ? trigger.enabled : true,
+        config: trigger.config || {},
+        // Handle form fields for Form triggers
+        ...(trigger.action_type === 'Workflow::Trigger::Form' && trigger.config?.form_fields ? {
+          form_fields_attributes: trigger.config.form_fields.map((field: any) => ({
+            id: typeof field.id === 'string' ? undefined : field.id,
+            field_type: field.type, // Use field_type instead of type
+            name: field.name,
+            label: field.label,
+            placeholder: field.placeholder,
+            required: field.required || false,
+            position: field.position,
+            help_text: field.description,
+            default_value: field.defaultValue,
+            validation_rules: field.validation || {},
+            options: field.options ? { values: field.options.map((opt: any) => opt.value || opt.label) } : undefined
+          }))
+        } : {})
+      }));
+
+      // Transform actions to match backend format
+      const actionsAttributes = (state.workflow.actions || []).map(action => ({
+        id: typeof action.id === 'string' && action.id.startsWith('action_') ? undefined : action.id,
+        type: action.action_type, // Use full class name
+        name: action.name,
+        description: action.description,
+        position: action.position,
+        enabled: action.enabled !== undefined ? action.enabled : true,
+        config: action.config || {}
+      }));
+
       const { data } = await api.put(`/workflows/${state.workflow.id}`, {
         workflow: {
           name: state.workflow.name,
           description: state.workflow.description,
-          triggers_attributes: state.workflow.triggers || [],
-          actions_attributes: state.workflow.actions || [],
+          triggers_attributes: triggersAttributes,
+          actions_attributes: actionsAttributes,
         },
       });
       dispatch({ type: 'SET_WORKFLOW', payload: data });
