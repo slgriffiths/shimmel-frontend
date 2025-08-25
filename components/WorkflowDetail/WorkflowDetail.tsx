@@ -219,11 +219,11 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
         {selectedStep &&
           (() => {
             // Get the current step from workflow state to ensure we have the latest data
-            // Check if selectedStep is a trigger or action to find in the right array
-            const isTrigger = selectedStep.stepType === 'trigger'; // Use stepType for UI type
-            const currentStep = isTrigger
-              ? workflow?.triggers.find((trigger) => trigger.id === selectedStep.id)
-              : workflow?.actions.find((action) => action.id === selectedStep.id);
+            // Check if selectedStep is a trigger or action by checking both arrays
+            const triggerStep = workflow?.triggers.find((trigger) => trigger.id === selectedStep.id);
+            const actionStep = workflow?.actions.find((action) => action.id === selectedStep.id);
+            const isTrigger = !!triggerStep;
+            const currentStep = triggerStep || actionStep;
             
             // Use the fresh data from workflow state, but ensure stepType is preserved
             const stepToUse = currentStep 
@@ -295,11 +295,11 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
         {selectedStep &&
           (() => {
             // Get the current step from workflow state to ensure we have the latest data
-            // Check if selectedStep is a trigger or action to find in the right array
-            const isTrigger = selectedStep.stepType === 'trigger'; // Use stepType for UI type
-            const currentStep = isTrigger
-              ? workflow?.triggers.find((trigger) => trigger.id === selectedStep.id)
-              : workflow?.actions.find((action) => action.id === selectedStep.id);
+            // Check if selectedStep is a trigger or action by checking both arrays
+            const triggerStep = workflow?.triggers.find((trigger) => trigger.id === selectedStep.id);
+            const actionStep = workflow?.actions.find((action) => action.id === selectedStep.id);
+            const isTrigger = !!triggerStep;
+            const currentStep = triggerStep || actionStep;
             
             // Use the fresh data from workflow state, but ensure stepType is preserved
             const stepToUse = currentStep 
