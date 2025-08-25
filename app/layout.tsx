@@ -51,8 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [projects, setRecentProjects] = useState<Project[]>([]);
 
-  // Auth routes that should not show the main layout
+  // Routes that should not show the main layout
   const isAuthRoute = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password') || pathname?.startsWith('/reset-password');
+  const isErrorRoute = pathname === '/404' || pathname === '/not-found';
 
   const navProjects = [
     {
@@ -86,8 +87,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
   }, [user, isLoading, pathname, router]);
 
-  // Return simple layout for auth routes
-  if (isAuthRoute) {
+  // Return simple layout for auth routes and error pages
+  if (isAuthRoute || isErrorRoute) {
     return (
       <html lang='en' style={{ margin: 0, padding: 0 }}>
         <body style={{ margin: 0, padding: 0 }}>
