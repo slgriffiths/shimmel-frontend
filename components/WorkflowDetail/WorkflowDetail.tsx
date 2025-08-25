@@ -225,10 +225,10 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
             const isTrigger = !!triggerStep;
             const currentStep = triggerStep || actionStep;
             
-            // Use the fresh data from workflow state, but ensure stepType is preserved
+            // Use the fresh data from workflow state, with stepType determined from array membership
             const stepToUse = currentStep 
-              ? { ...currentStep, stepType: selectedStep.stepType }
-              : selectedStep;
+              ? { ...currentStep, stepType: isTrigger ? 'trigger' : 'action' }
+              : { ...selectedStep, stepType: isTrigger ? 'trigger' : 'action' };
 
             return (
               <div>
@@ -301,10 +301,10 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
             const isTrigger = !!triggerStep;
             const currentStep = triggerStep || actionStep;
             
-            // Use the fresh data from workflow state, but ensure stepType is preserved
+            // Use the fresh data from workflow state, with stepType determined from array membership
             const stepToUse = currentStep 
-              ? { ...currentStep, stepType: selectedStep.stepType }
-              : selectedStep;
+              ? { ...currentStep, stepType: isTrigger ? 'trigger' : 'action' }
+              : { ...selectedStep, stepType: isTrigger ? 'trigger' : 'action' };
 
             return (
               <div>

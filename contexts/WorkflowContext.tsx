@@ -9,17 +9,21 @@ export interface WorkflowTrigger {
   id: string;
   type: string;
   name?: string;
+  description?: string;
   config: Record<string, any>;
   position: number;
   form_fields?: any[];
+  enabled?: boolean;
 }
 
 export interface WorkflowAction {
   id: string;
   type: string;
   name?: string;
+  description?: string;
   config: Record<string, any>;
   position: number;
+  enabled?: boolean;
 }
 
 export interface TriggerType {
