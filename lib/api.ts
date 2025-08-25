@@ -11,6 +11,14 @@ export const updateApiToken = (token: string) => {
   api.defaults.headers.Authorization = `Bearer ${token}`;
 };
 
+// Track if refresh has failed to prevent infinite refresh loops
+let refreshFailed = false;
+
+// Function to reset refresh state (call after successful login)
+export const resetRefreshState = () => {
+  refreshFailed = false;
+};
+
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
 
@@ -34,7 +42,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't try to refresh if we already know refresh failed or if we're on a public route
+    if (error.response?.status === 401 && !originalRequest._retry && !refreshFailed) {
       originalRequest._retry = true;
 
       try {
@@ -50,6 +59,9 @@ api.interceptors.response.use(
         const data = await response.json();
         const newToken = data.access_token;
         
+        // Reset refresh failed flag on successful refresh
+        refreshFailed = false;
+        
         api.defaults.headers.Authorization = `Bearer ${newToken}`;
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
@@ -59,6 +71,10 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Failed to refresh token", refreshError);
+        
+        // Mark refresh as failed to prevent further attempts
+        refreshFailed = true;
+        
         // Only redirect to login if not already on a public route
         if (!isPublicRoute()) {
           window.location.href = '/login';

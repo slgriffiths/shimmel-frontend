@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api, resetRefreshState } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 // Public routes that don't require authentication
@@ -20,7 +20,13 @@ export const useAuth = () => {
   const router = useRouter();
 
   useEffect(() => {
-    fetchUser();
+    // Only fetch user if not on a public route
+    if (!isPublicRoute()) {
+      fetchUser();
+    } else {
+      // If on public route, set loading to false immediately
+      setIsLoading(false);
+    }
     const cleanup = startHealthCheck();
     
     // Listen for token refresh events from API interceptor
@@ -67,6 +73,10 @@ export const useAuth = () => {
       }
 
       const { user, access_token } = await response.json();
+      
+      // Reset refresh state on successful login
+      resetRefreshState();
+      
       updateAccessToken(access_token);
       setUser(user);
       router.push("/dashboard");
