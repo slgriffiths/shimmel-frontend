@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import GenerateTextActionConfig from './GenerateTextActionConfig';
+import SendEmailActionConfig from './SendEmailActionConfig';
 
 const { Paragraph } = Typography;
 
@@ -21,10 +22,10 @@ export default function ActionConfig({ actionType, config, onConfigChange }: Act
     
     case 'Workflow::Action::SendEmail':
       return (
-        <div>
-          <Paragraph>Send Email action configuration will be implemented here.</Paragraph>
-          <Paragraph>Action Type: {actionType}</Paragraph>
-        </div>
+        <SendEmailActionConfig
+          config={config}
+          onConfigChange={onConfigChange}
+        />
       );
     
     case 'Workflow::Action::CreateRecord':
