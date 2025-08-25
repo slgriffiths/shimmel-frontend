@@ -68,7 +68,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
 
   const handleTypeSelection = (selectedType: TriggerType | ActionType) => {
     const newItem = {
-      action_type: selectedType.type,
+      type: selectedType.type, // Use backend field name directly
       name: selectedType.name,
       config: {},
     };
@@ -88,28 +88,19 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
 
   const handleFormFieldsChange = (fields: FormField[]) => {
     if (selectedStep) {
-      console.log('Updating form fields:', fields);
-      const updatedConfig = {
-        ...selectedStep.config,
-        form_fields: fields,
-      };
-      console.log('Updated config:', updatedConfig);
-      
-      // Check if this is a trigger or action by looking at action_type
-      if (selectedStep.action_type?.includes('Trigger')) {
-        updateTrigger(selectedStep.id, { config: updatedConfig });
+      // For Form triggers, update form_fields directly (not in config)
+      if (selectedStep.type?.includes('Trigger')) {
+        updateTrigger(selectedStep.id, { form_fields: fields });
       } else {
-        updateAction(selectedStep.id, { config: updatedConfig });
+        updateAction(selectedStep.id, { config: { ...selectedStep.config, form_fields: fields } });
       }
     }
   };
 
   const handleActionConfigChange = (config: Record<string, any>) => {
     if (selectedStep) {
-      console.log('Updating action config:', config);
-      
-      // Check if this is a trigger or action by looking at action_type
-      if (selectedStep.action_type?.includes('Trigger')) {
+      // Check if this is a trigger or action by looking at type
+      if (selectedStep.type?.includes('Trigger')) {
         updateTrigger(selectedStep.id, { config });
       } else {
         updateAction(selectedStep.id, { config });
@@ -136,11 +127,11 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
 
   // Combine triggers and actions for display, with triggers first
   const allSteps = [
-    ...(workflow.triggers || []).map(trigger => ({ ...trigger, type: 'trigger' })),
-    ...(workflow.actions || []).map(action => ({ ...action, type: 'action' }))
+    ...(workflow.triggers || []).map(trigger => ({ ...trigger, stepType: 'trigger' })),
+    ...(workflow.actions || []).map(action => ({ ...action, stepType: 'action' }))
   ].sort((a, b) => {
-    if (a.type !== b.type) {
-      return a.type === 'trigger' ? -1 : 1;
+    if (a.stepType !== b.stepType) {
+      return a.stepType === 'trigger' ? -1 : 1;
     }
     return a.position - b.position;
   });
@@ -150,7 +141,14 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
       <div className={styles.header}>
         <div>
           <Title level={2}>{workflow.name}</Title>
-          <Paragraph type='secondary'>Created on {new Date(workflow.created_at).toLocaleDateString()}</Paragraph>
+          {workflow.description && (
+            <Paragraph type='secondary' style={{ fontSize: '14px', marginBottom: '4px' }}>
+              {workflow.description}
+            </Paragraph>
+          )}
+          <Paragraph type='secondary' style={{ fontSize: '12px', margin: 0 }}>
+            Created on {new Date(workflow.created_at).toLocaleDateString()}
+          </Paragraph>
         </div>
         <Button type='primary' icon={<SaveOutlined />} onClick={saveWorkflow} loading={loading}>
           Save Workflow
@@ -159,9 +157,9 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
 
       <div className={styles.workflowBuilder}>
         {allSteps.map((step, index) => (
-          <div key={step.id} className={styles.actionContainer}>
+          <div key={`${step.stepType}-${step.id}`} className={styles.actionContainer}>
             <Card
-              className={`${styles.actionCard} ${styles[step.type]}`}
+              className={`${styles.actionCard} ${styles[step.stepType]}`}
               onClick={() => handleCardClick(step)}
               hoverable
               actions={[
@@ -176,13 +174,13 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
               ]}
             >
               <div className={styles.actionHeader}>
-                <span className={styles.actionType}>{step.type === 'trigger' ? 'Trigger' : 'Action'}</span>
+                <span className={styles.actionType}>{step.stepType === 'trigger' ? 'Trigger' : 'Action'}</span>
                 <Title level={4} className={styles.actionTitle}>
-                  {step.name || step.action_type}
+                  {step.name || step.type}
                 </Title>
               </div>
               <Paragraph type='secondary' className={styles.actionDescription}>
-                {step.action_type}
+                {step.type}
               </Paragraph>
             </Card>
 
@@ -217,34 +215,40 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
           (() => {
             // Get the current step from workflow state to ensure we have the latest data
             // Check if selectedStep is a trigger or action to find in the right array
-            const isTrigger = selectedStep.action_type?.includes('Trigger');
+            const isTrigger = selectedStep.stepType === 'trigger'; // Use stepType for UI type
             const currentStep = isTrigger
               ? workflow?.triggers.find((trigger) => trigger.id === selectedStep.id)
               : workflow?.actions.find((action) => action.id === selectedStep.id);
             
-            // Ensure the step has the correct type property for the UI logic
+            // Use the fresh data from workflow state, but ensure stepType is preserved
             const stepToUse = currentStep 
-              ? { ...currentStep, type: isTrigger ? 'trigger' : 'action' }
+              ? { ...currentStep, stepType: selectedStep.stepType }
               : selectedStep;
 
             return (
               <div>
-                {stepToUse.action_type === 'Workflow::Trigger::Form' ? (
+                {stepToUse.type === 'Workflow::Trigger::Form' ? (
                   <FormTriggerConfig
-                    fields={stepToUse.config?.form_fields || []}
+                    fields={(stepToUse.form_fields || []).map((field: any) => ({
+                      ...field,
+                      type: field.field_type, // Map backend field_type to frontend type
+                      description: field.help_text,
+                      defaultValue: field.default_value,
+                      validation: field.validation_rules
+                    }))}
                     onFieldsChange={handleFormFieldsChange}
                   />
-                ) : stepToUse.type === 'action' ? (
+                ) : stepToUse.stepType === 'action' ? (
                   <ActionConfig
-                    actionType={stepToUse.action_type}
+                    actionType={stepToUse.type}
                     config={stepToUse.config || {}}
                     onConfigChange={handleActionConfigChange}
                   />
                 ) : (
                   <div>
-                    <Paragraph>Configuration form for: {stepToUse.name || stepToUse.action_type}</Paragraph>
+                    <Paragraph>Configuration form for: {stepToUse.name || stepToUse.type}</Paragraph>
                     <Paragraph>Type: {stepToUse.type}</Paragraph>
-                    <Paragraph>Action Type: {stepToUse.action_type}</Paragraph>
+                    <Paragraph>Step Type: {stepToUse.stepType}</Paragraph>
                     <Paragraph type='secondary'>
                       This trigger type doesn't have a custom configuration form yet.
                     </Paragraph>

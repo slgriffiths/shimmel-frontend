@@ -7,15 +7,16 @@ import { message as antdMessage } from 'antd';
 // Types - backend will provide trigger/action definitions
 export interface WorkflowTrigger {
   id: string;
-  action_type: string;
+  type: string;
   name?: string;
   config: Record<string, any>;
   position: number;
+  form_fields?: any[];
 }
 
 export interface WorkflowAction {
   id: string;
-  action_type: string;
+  type: string;
   name?: string;
   config: Record<string, any>;
   position: number;
@@ -269,14 +270,14 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
       // Transform triggers to match backend format
       const triggersAttributes = (state.workflow.triggers || []).map(trigger => ({
         id: typeof trigger.id === 'string' && trigger.id.startsWith('trigger_') ? undefined : trigger.id,
-        type: trigger.action_type, // Use full class name
+        type: trigger.type, // Use full class name
         name: trigger.name,
         description: trigger.description,
         enabled: trigger.enabled !== undefined ? trigger.enabled : true,
         config: trigger.config || {},
         // Handle form fields for Form triggers
-        ...(trigger.action_type === 'Workflow::Trigger::Form' && trigger.config?.form_fields ? {
-          form_fields_attributes: trigger.config.form_fields.map((field: any) => ({
+        ...(trigger.type === 'Workflow::Trigger::Form' && trigger.form_fields ? {
+          form_fields_attributes: trigger.form_fields.map((field: any) => ({
             id: typeof field.id === 'string' ? undefined : field.id,
             field_type: field.type, // Use field_type instead of type
             name: field.name,
@@ -287,7 +288,9 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
             help_text: field.description,
             default_value: field.defaultValue,
             validation_rules: field.validation || {},
-            options: field.options ? { values: field.options.map((opt: any) => opt.value || opt.label) } : undefined
+            options: field.options && Array.isArray(field.options) 
+              ? { values: field.options.map((opt: any) => opt.value || opt.label) } 
+              : field.options || undefined
           }))
         } : {})
       }));
@@ -295,7 +298,7 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
       // Transform actions to match backend format
       const actionsAttributes = (state.workflow.actions || []).map(action => ({
         id: typeof action.id === 'string' && action.id.startsWith('action_') ? undefined : action.id,
-        type: action.action_type, // Use full class name
+        type: action.type, // Use full class name
         name: action.name,
         description: action.description,
         position: action.position,
