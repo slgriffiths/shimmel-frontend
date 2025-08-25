@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Typography, Spin, Button, Card, Dropdown, Drawer } from 'antd';
-import { SaveOutlined, MoreOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { Typography, Spin, Button, Card, Dropdown, Drawer, Tabs } from 'antd';
+import { SaveOutlined, MoreOutlined, EditOutlined, PlusOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import styles from './WorkflowDetail.module.scss';
 import { useWorkflow, TriggerType, ActionType } from '@/contexts/WorkflowContext';
 import TriggerActionSelectionModal from './TriggerActionSelectionModal';
 import FormTriggerConfig from './FormTriggerConfig';
 import ActionConfig from './ActionConfig';
+import WorkflowRun from './WorkflowRun';
 import { FormField } from './formFieldTypes';
 
 const { Title, Paragraph } = Typography;
@@ -136,24 +137,28 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     return a.position - b.position;
   });
 
-  return (
-    <div className={styles.workflowDetail}>
-      <div className={styles.header}>
+  const workflowTabItems = [
+    {
+      key: 'workflow',
+      label: 'Workflow',
+      children: (
         <div>
-          <Title level={2}>{workflow.name}</Title>
-          {workflow.description && (
-            <Paragraph type='secondary' style={{ fontSize: '14px', marginBottom: '4px' }}>
-              {workflow.description}
-            </Paragraph>
-          )}
-          <Paragraph type='secondary' style={{ fontSize: '12px', margin: 0 }}>
-            Created on {new Date(workflow.created_at).toLocaleDateString()}
-          </Paragraph>
-        </div>
-        <Button type='primary' icon={<SaveOutlined />} onClick={saveWorkflow} loading={loading}>
-          Save Workflow
-        </Button>
-      </div>
+          <div className={styles.header}>
+            <div>
+              <Title level={2}>{workflow.name}</Title>
+              {workflow.description && (
+                <Paragraph type='secondary' style={{ fontSize: '14px', marginBottom: '4px' }}>
+                  {workflow.description}
+                </Paragraph>
+              )}
+              <Paragraph type='secondary' style={{ fontSize: '12px', margin: 0 }}>
+                Created on {new Date(workflow.created_at).toLocaleDateString()}
+              </Paragraph>
+            </div>
+            <Button type='primary' icon={<SaveOutlined />} onClick={saveWorkflow} loading={loading}>
+              Save Workflow
+            </Button>
+          </div>
 
       <div className={styles.workflowBuilder}>
         {allSteps.map((step, index) => (
@@ -259,14 +264,81 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
           })()}
       </Drawer>
 
-      <TriggerActionSelectionModal
-        open={selectionModal.open}
-        mode={selectionModal.mode}
-        triggerTypes={triggerTypes}
-        actionTypes={actionTypes}
-        onSelect={handleTypeSelection}
-        onCancel={handleCancelSelection}
-      />
+          <TriggerActionSelectionModal
+            open={selectionModal.open}
+            mode={selectionModal.mode}
+            triggerTypes={triggerTypes}
+            actionTypes={actionTypes}
+            onSelect={handleTypeSelection}
+            onCancel={handleCancelSelection}
+          />
+        </div>
+      )
+    },
+    {
+      key: 'run',
+      label: (
+        <span>
+          <PlayCircleOutlined />
+          Run
+        </span>
+      ),
+      children: <WorkflowRun workflowId={workflowId} />
+    }
+  ];
+
+  return (
+    <div className={styles.workflowDetail}>
+      <Tabs items={workflowTabItems} />
+
+      <Drawer title='Edit Configuration' open={!!selectedStep} onClose={() => setSelectedStep(null)} width={600}>
+        {selectedStep &&
+          (() => {
+            // Get the current step from workflow state to ensure we have the latest data
+            // Check if selectedStep is a trigger or action to find in the right array
+            const isTrigger = selectedStep.stepType === 'trigger'; // Use stepType for UI type
+            const currentStep = isTrigger
+              ? workflow?.triggers.find((trigger) => trigger.id === selectedStep.id)
+              : workflow?.actions.find((action) => action.id === selectedStep.id);
+            
+            // Use the fresh data from workflow state, but ensure stepType is preserved
+            const stepToUse = currentStep 
+              ? { ...currentStep, stepType: selectedStep.stepType }
+              : selectedStep;
+
+            return (
+              <div>
+                {stepToUse.type === 'Workflow::Trigger::Form' ? (
+                  <FormTriggerConfig
+                    fields={(stepToUse.form_fields || []).map((field: any) => ({
+                      ...field,
+                      type: field.field_type, // Map backend field_type to frontend type
+                      description: field.help_text,
+                      defaultValue: field.default_value,
+                      validation: field.validation_rules
+                    }))}
+                    onFieldsChange={handleFormFieldsChange}
+                  />
+                ) : stepToUse.stepType === 'action' ? (
+                  <ActionConfig
+                    actionType={stepToUse.type}
+                    config={stepToUse.config || {}}
+                    onConfigChange={handleActionConfigChange}
+                  />
+                ) : (
+                  <div>
+                    <Paragraph>Configuration form for: {stepToUse.name || stepToUse.type}</Paragraph>
+                    <Paragraph>Type: {stepToUse.type}</Paragraph>
+                    <Paragraph>Step Type: {stepToUse.stepType}</Paragraph>
+                    <Paragraph type='secondary'>
+                      This trigger type doesn't have a custom configuration form yet.
+                    </Paragraph>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+      </Drawer>
     </div>
   );
 }
