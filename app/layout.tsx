@@ -54,6 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [projects, setRecentProjects] = useState<Project[]>([]);
 
+  // Auth routes that should not show the main layout
+  const isAuthRoute = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password') || pathname?.startsWith('/reset-password');
+
   const navProjects = [
     {
       key: 'new-project',
@@ -85,6 +88,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       router.push('/login');
     }
   }, [user, isLoading, pathname, router]);
+
+  // Return simple layout for auth routes
+  if (isAuthRoute) {
+    return (
+      <html lang='en' style={{ margin: 0, padding: 0 }}>
+        <body style={{ margin: 0, padding: 0 }}>
+          <UserProvider>
+            {children}
+          </UserProvider>
+        </body>
+      </html>
+    );
+  }
 
   if (isLoading) {
     return (

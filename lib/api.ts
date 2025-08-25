@@ -6,8 +6,31 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Function to update access token (will be called from useAuth)
+export const updateApiToken = (token: string) => {
+  api.defaults.headers.Authorization = `Bearer ${token}`;
+};
+
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+
+// Helper function to check if current route is public
+const isPublicRoute = () => {
+  if (typeof window === 'undefined') return false;
+  const currentPath = window.location.pathname;
+  return PUBLIC_ROUTES.some(route => currentPath.startsWith(route));
+};
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check for new access token in response headers
+    const newToken = response.headers['x-new-access-token'];
+    if (newToken) {
+      // Dispatch event to update token in useAuth hook
+      window.dispatchEvent(new CustomEvent('tokenRefresh', { detail: newToken }));
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
@@ -15,18 +38,31 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/refresh_token`,
-          {},
-          { withCredentials: true }
-        );
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        });
 
-        api.defaults.headers.Authorization = `Bearer ${data.access_token}`;
-        originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
+        if (!response.ok) {
+          throw new Error('Token refresh failed');
+        }
+
+        const data = await response.json();
+        const newToken = data.access_token;
+        
+        api.defaults.headers.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        // Notify useAuth hook of token update
+        window.dispatchEvent(new CustomEvent('tokenRefresh', { detail: newToken }));
 
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Failed to refresh token", refreshError);
+        // Only redirect to login if not already on a public route
+        if (!isPublicRoute()) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }
