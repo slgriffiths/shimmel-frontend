@@ -35,7 +35,7 @@ export default function LoginPage() {
       if (!result.success) {
         setError(result.error || 'Login failed. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -146,7 +146,7 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginTop: 24 }}>
           <Space direction="vertical" size={8}>
             <Text type="secondary" style={{ fontSize: 14 }}>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <a href="#" style={{ color: '#667eea', fontWeight: 500 }}>
                 Contact support
               </a>

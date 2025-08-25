@@ -1,7 +1,4 @@
 "use client";
-import { Spin } from "antd";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // const { isAuthenticated, user } = useAuth();

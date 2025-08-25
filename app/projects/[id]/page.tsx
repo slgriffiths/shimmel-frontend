@@ -25,8 +25,10 @@ export default function ProjectDetailPage() {
       try {
         const { data } = await api.get(`/projects/${id}`);
         setProject(data);
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'response' in err && 
+            err.response && typeof err.response === 'object' && 
+            'status' in err.response && err.response.status === 404) {
           message.error('Project not found. Redirecting to dashboard...');
           router.push('/dashboard');
         } else {
@@ -38,7 +40,7 @@ export default function ProjectDetailPage() {
     };
 
     fetchProject();
-  }, []);
+  }, [id, router]);
 
   if (loading) {
     return (

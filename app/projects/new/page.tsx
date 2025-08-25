@@ -11,7 +11,7 @@ export default function NewProjectPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: {name: string; description?: string}) => {
     setLoading(true);
     try {
       const response = await api.post('/projects', values);

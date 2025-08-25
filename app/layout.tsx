@@ -6,9 +6,6 @@ import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin, Tooltip } fro
 import { UserProvider } from '@/contexts/UserContext';
 import {
   HomeOutlined,
-  FileOutlined,
-  TeamOutlined,
-  MessageOutlined,
   SettingOutlined,
   LogoutOutlined,
   PlusOutlined,
@@ -44,7 +41,7 @@ interface Project {
   };
 }
 
-const { Header, Sider, Content } = Layout;
+const { Sider, Content } = Layout;
 const { Text } = Typography;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
