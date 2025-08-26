@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin, Tooltip } from 'antd';
 import { UserProvider } from '@/contexts/UserContext';
+import { api } from '@/lib/api';
 import {
   HomeOutlined,
   SettingOutlined,
@@ -52,7 +53,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [projects, setRecentProjects] = useState<Project[]>([]);
 
   // Routes that should not show the main layout
-  const isAuthRoute = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password') || pathname?.startsWith('/reset-password');
+  const isAuthRoute =
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/forgot-password') ||
+    pathname?.startsWith('/reset-password');
   const isErrorRoute = pathname === '/404' || pathname === '/not-found';
 
   const navProjects = [
@@ -60,7 +65,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       key: 'new-project',
       label: <Link href='/projects/new'>+ New Project</Link>,
     },
-    { key: 'add-projects', label: <Spin size='small' /> },
   ];
 
   if (projects.length) {
@@ -74,26 +78,24 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`)
-      .then((res) => res.json())
-      .then((data) => setRecentProjects(Array.isArray(data) ? data : []));
-  }, []);
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.get('/projects');
+        setRecentProjects(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        setRecentProjects([]);
+      }
+    };
 
-  useEffect(() => {
-    // TODO: Remove this when ready to work on auth
-    return;
-    if (!isLoading && !user && pathname !== '/login') {
-      router.push('/login');
+    if (user) {
+      fetchProjects();
     }
-  }, [user, isLoading, pathname, router]);
+  }, [user]);
 
   // Return simple layout for auth routes and error pages
   if (isAuthRoute || isErrorRoute) {
-    return (
-      <UserProvider>
-        {children}
-      </UserProvider>
-    );
+    return <UserProvider>{children}</UserProvider>;
   }
 
   if (isLoading) {
@@ -174,12 +176,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               </Button>
             </Tooltip>
           </div>
-          <Menu
-            theme='light'
-            mode='inline'
-            items={menuItems}
-            defaultOpenKeys={collapsed ? [] : ['projects-menu']}
-          />
+          <Menu theme='light' mode='inline' items={menuItems} defaultOpenKeys={collapsed ? [] : ['projects-menu']} />
 
           {/* Profile + Settings Dropup */}
           <div style={{ position: 'absolute', bottom: 60, width: '100%', textAlign: 'center' }}>
