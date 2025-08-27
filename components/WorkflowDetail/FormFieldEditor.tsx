@@ -16,7 +16,7 @@ interface FormFieldEditorProps {
 
 export default function FormFieldEditor({ field, onSave, onCancel, onDelete }: FormFieldEditorProps) {
   const [form] = Form.useForm();
-  const [selectedType, setSelectedType] = useState<FormFieldType>(field.type);
+  const [selectedType, setSelectedType] = useState<FormFieldType>(field.type || 'text');
 
   const handleTypeChange = (type: FormFieldType) => {
     setSelectedType(type);

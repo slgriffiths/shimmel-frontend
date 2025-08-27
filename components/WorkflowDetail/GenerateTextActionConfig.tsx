@@ -1,4 +1,5 @@
-import { Form, Input, Select, InputNumber, Typography, Space } from 'antd';
+import { Form, Input, Select, InputNumber, Typography, Space, Popover, Button } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 
@@ -23,6 +24,43 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
   const [form] = Form.useForm();
   const { state } = useWorkflow();
   const { workflow } = state;
+
+  const variableInstructions = (
+    <div style={{ maxWidth: 400 }}>
+      <Title level={5} style={{ marginBottom: 12, fontSize: 14 }}>
+        Template Variables Guide
+      </Title>
+      
+      <div style={{ marginBottom: 16 }}>
+        <Text strong style={{ fontSize: 13, color: '#1890ff' }}>
+          Form Data Variables:
+        </Text>
+        <div style={{ marginTop: 6, fontSize: 12, fontFamily: 'monospace', backgroundColor: '#f6f8fa', padding: 8, borderRadius: 4 }}>
+          <div>{'{{form.fieldName}}'} → User input value</div>
+          <div>{'{{trigger.data.fieldName}}'} → Alternative format</div>
+        </div>
+        <Text style={{ fontSize: 11, color: '#666', marginTop: 4, display: 'block' }}>
+          Example: {'{{form.name}}'} → "John", {'{{form.email}}'} → "john@example.com"
+        </Text>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <Text strong style={{ fontSize: 13, color: '#52c41a' }}>
+          Previous Step Variables:
+        </Text>
+        <div style={{ marginTop: 6, fontSize: 12, fontFamily: 'monospace', backgroundColor: '#f6f8fa', padding: 8, borderRadius: 4 }}>
+          <div>{'{{previousStep.result}}'} → Main output</div>
+          <div>{'{{previousStep.type}}'} → Action type</div>
+          <div>{'{{previousStep.metadata.execution_time_ms}}'} → Execution time</div>
+          <div>{'{{previousStep.metadata.step_number}}'} → Step number</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic' }}>
+        💡 Tip: Variables are case-sensitive and must match your form field names exactly.
+      </div>
+    </div>
+  );
 
   // Get available models from the serialized workflow object
   const availableModels = workflow?.available_llm_models || [];
@@ -56,9 +94,26 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
       >
         <Form.Item
           name="prompt"
-          label="Text Prompt"
+          label={
+            <Space>
+              Text Prompt
+              <Popover 
+                content={variableInstructions} 
+                title="Template Variables" 
+                trigger="click"
+                placement="topLeft"
+              >
+                <Button 
+                  type="text" 
+                  size="small" 
+                  icon={<QuestionCircleOutlined />}
+                  style={{ color: '#1890ff' }}
+                />
+              </Popover>
+            </Space>
+          }
           rules={[{ required: true, message: 'Please enter a prompt' }]}
-          extra="The prompt to send to the AI model. You can use template variables like {{form.fieldName}} or {{previousStep.outputField}}"
+          extra="The prompt to send to the AI model. Click the ? icon for template variable examples."
         >
           <TextArea
             rows={4}
@@ -136,8 +191,25 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
 
         <Form.Item
           name="system_message"
-          label="System Message"
-          extra="Optional system message to guide the AI's behavior and tone"
+          label={
+            <Space>
+              System Message
+              <Popover 
+                content={variableInstructions} 
+                title="Template Variables" 
+                trigger="click"
+                placement="topLeft"
+              >
+                <Button 
+                  type="text" 
+                  size="small" 
+                  icon={<QuestionCircleOutlined />}
+                  style={{ color: '#1890ff' }}
+                />
+              </Popover>
+            </Space>
+          }
+          extra="Optional system message to guide the AI's behavior and tone. Template variables are supported."
         >
           <TextArea
             rows={2}

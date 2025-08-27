@@ -158,13 +158,18 @@ export const createNewField = (type: FormFieldType, position: number): FormField
   const definition = getFieldTypeDefinition(type);
   const id = `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
-  return {
+  // Ensure type is always set, default to 'text' if not provided
+  const safeType = type || 'text';
+  
+  const newField: FormField = {
     id,
     name: `field_${position + 1}`,
     label: definition?.name || 'New Field',
-    type,
+    type: safeType,
     required: false,
     position,
     ...definition?.defaultConfig
   };
+  
+  return newField;
 };

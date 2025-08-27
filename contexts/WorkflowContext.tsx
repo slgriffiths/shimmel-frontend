@@ -132,10 +132,8 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         ...state,
         workflow: {
           ...state.workflow,
-          triggers: state.workflow.triggers.map(trigger =>
-            trigger.id === action.payload.triggerId
-              ? { ...trigger, ...action.payload.updates }
-              : trigger
+          triggers: state.workflow.triggers.map((trigger) =>
+            trigger.id === action.payload.triggerId ? { ...trigger, ...action.payload.updates } : trigger
           ),
         },
       };
@@ -145,7 +143,7 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         ...state,
         workflow: {
           ...state.workflow,
-          actions: state.workflow.actions.map(workflowAction =>
+          actions: state.workflow.actions.map((workflowAction) =>
             workflowAction.id === action.payload.actionId
               ? { ...workflowAction, ...action.payload.updates }
               : workflowAction
@@ -176,7 +174,7 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         ...state,
         workflow: {
           ...state.workflow,
-          triggers: (state.workflow.triggers || []).filter(trigger => trigger.id !== action.payload),
+          triggers: (state.workflow.triggers || []).filter((trigger) => trigger.id !== action.payload),
         },
       };
     case 'DELETE_ACTION':
@@ -185,7 +183,7 @@ function workflowReducer(state: WorkflowState, action: WorkflowContextAction): W
         ...state,
         workflow: {
           ...state.workflow,
-          actions: (state.workflow.actions || []).filter(workflowAction => workflowAction.id !== action.payload),
+          actions: (state.workflow.actions || []).filter((workflowAction) => workflowAction.id !== action.payload),
         },
       };
     case 'UPDATE_WORKFLOW_META':
@@ -262,9 +260,9 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     try {
       const [triggerTypesResponse, actionTypesResponse] = await Promise.all([
         api.get('/workflow_trigger_types'),
-        api.get('/workflow_action_types')
+        api.get('/workflow_action_types'),
       ]);
-      
+
       dispatch({ type: 'SET_TRIGGER_TYPES', payload: triggerTypesResponse.data });
       dispatch({ type: 'SET_ACTION_TYPES', payload: actionTypesResponse.data });
     } catch (err) {
@@ -275,11 +273,11 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
 
   const saveWorkflow = async () => {
     if (!state.workflow) return;
-    
+
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Transform triggers to match backend format
-      const triggersAttributes = (state.workflow.triggers || []).map(trigger => ({
+      const triggersAttributes = (state.workflow.triggers || []).map((trigger) => ({
         id: typeof trigger.id === 'string' && trigger.id.startsWith('trigger_') ? undefined : trigger.id,
         type: trigger.type, // Use full class name
         name: trigger.name,
@@ -287,34 +285,44 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
         enabled: trigger.enabled !== undefined ? trigger.enabled : true,
         config: trigger.config || {},
         // Handle form fields for Form triggers
-        ...(trigger.type === 'Workflow::Trigger::Form' && trigger.form_fields ? {
-          form_fields_attributes: trigger.form_fields.map((field: any) => ({
-            id: typeof field.id === 'string' ? undefined : field.id,
-            field_type: field.type, // Use field_type instead of type
-            name: field.name,
-            label: field.label,
-            placeholder: field.placeholder,
-            required: field.required || false,
-            position: field.position,
-            help_text: field.description,
-            default_value: field.defaultValue,
-            validation_rules: field.validation || {},
-            options: field.options && Array.isArray(field.options) 
-              ? { values: field.options.map((opt: any) => opt.value || opt.label) } 
-              : field.options || undefined
-          }))
-        } : {})
+        ...(trigger.type === 'Workflow::Trigger::Form' && trigger.form_fields
+          ? {
+              form_fields_attributes: trigger.form_fields.map((field: any) => {
+                // Validate that field has a type property
+                if (!field.type) {
+                  console.warn('Form field missing type property:', field);
+                }
+
+                return {
+                  id: typeof field.id === 'string' ? undefined : field.id,
+                  field_type: field.type || 'text', // Use field_type instead of type, default to 'text' if missing
+                  name: field.name,
+                  label: field.label,
+                  placeholder: field.placeholder,
+                  required: field.required || false,
+                  position: field.position,
+                  help_text: field.description,
+                  default_value: field.defaultValue,
+                  validation_rules: field.validation || {},
+                  options:
+                    field.options && Array.isArray(field.options)
+                      ? { values: field.options.map((opt: any) => opt.value || opt.label) }
+                      : field.options || undefined,
+                };
+              }),
+            }
+          : {}),
       }));
 
       // Transform actions to match backend format
-      const actionsAttributes = (state.workflow.actions || []).map(action => ({
+      const actionsAttributes = (state.workflow.actions || []).map((action) => ({
         id: typeof action.id === 'string' && action.id.startsWith('action_') ? undefined : action.id,
         type: action.type, // Use full class name
         name: action.name,
         description: action.description,
         position: action.position,
         enabled: action.enabled !== undefined ? action.enabled : true,
-        config: action.config || {}
+        config: action.config || {},
       }));
 
       const { data } = await api.put(`/workflows/${state.workflow.id}`, {
