@@ -10,6 +10,7 @@ const { Option } = Select;
 
 interface GenerateTextConfig {
   prompt?: string;
+  agent_id?: number;
   model?: string;
   max_tokens?: number;
   temperature?: number;
@@ -68,31 +69,35 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
   const availableModels = configuration?.available_llm_models || [];
   const agents = configuration?.available_agents || [];
   
-  // Check if an agent is selected
-  const selectedAgent = form.getFieldValue('agent');
-  const isAgentSelected = !!selectedAgent;
-  
-  // If agent is selected, use agent_ID format for the model field
-  const currentAgent = agents.find(a => a.id.toString() === selectedAgent);
+  // We'll check agent selection inside Form.Item with shouldUpdate to avoid circular refs
 
   useEffect(() => {
-    form.setFieldsValue(config);
+    // When loading config, if there's an agent_id, set the agent field
+    const formValues = { ...config };
+    if (config.agent_id) {
+      formValues.agent = config.agent_id.toString();
+    }
+    form.setFieldsValue(formValues);
   }, [config, form]);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
-    // If agent is selected/changed, update the model field to agent_ID format
+    // Always exclude the 'agent' field from the final config as it's UI-only
+    const { agent, ...configValues } = allValues;
+    
+    // If agent is selected/changed, set agent_id and remove model
     if (changedValues.agent) {
+      const { model, ...restValues } = configValues;
       const updatedValues = {
-        ...allValues,
-        model: `agent_${changedValues.agent}`,
+        ...restValues,
+        agent_id: parseInt(changedValues.agent),
       };
-      form.setFieldValue('model', `agent_${changedValues.agent}`);
       onConfigChange(updatedValues);
-    } else if (changedValues.agent === undefined && allValues.agent) {
-      // Agent was cleared, keep the regular model selection
-      onConfigChange(allValues);
+    } else if (changedValues.agent === null || changedValues.agent === undefined) {
+      // Agent was cleared, remove agent_id
+      const { agent_id, ...restValues } = configValues;
+      onConfigChange(restValues);
     } else {
-      onConfigChange(allValues);
+      onConfigChange(configValues);
     }
   };
 
@@ -187,18 +192,26 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
           </Form.Item>
         )}
 
-        {isAgentSelected && currentAgent && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#f0f9ff', border: '1px solid #bae7ff', borderRadius: 6 }}>
-            <Text strong style={{ color: '#1890ff' }}>Agent Configuration:</Text>
-            <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-              <div><strong>Uses Model:</strong> {currentAgent.underlying_model}</div>
-              <div><strong>Temperature:</strong> {currentAgent.temperature}</div>
-              <div><strong>System Instructions:</strong> Pre-configured</div>
-            </div>
-          </div>
-        )}
+        <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.agent !== currentValues.agent} noStyle>
+          {({ getFieldValue }) => {
+            const selectedAgent = getFieldValue('agent');
+            const isAgentSelected = !!selectedAgent;
+            const currentAgent = agents.find(a => a.id.toString() === selectedAgent);
 
-        {!isAgentSelected && (
+            return (
+              <>
+                {isAgentSelected && currentAgent && (
+                  <div style={{ marginBottom: 16, padding: 12, background: '#f0f9ff', border: '1px solid #bae7ff', borderRadius: 6 }}>
+                    <Text strong style={{ color: '#1890ff' }}>Agent Configuration:</Text>
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                      <div><strong>Uses Model:</strong> {currentAgent.underlying_model}</div>
+                      <div><strong>Temperature:</strong> {currentAgent.temperature}</div>
+                      <div><strong>System Instructions:</strong> Pre-configured</div>
+                    </div>
+                  </div>
+                )}
+
+                {!isAgentSelected && (
           <Form.Item
             name="model"
             label="AI Model"
@@ -237,85 +250,98 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
               ))}
             </Select>
           </Form.Item>
-        )}
+                )}
 
-        {!isAgentSelected && (
-          <Space.Compact style={{ width: '100%' }}>
-            <Form.Item
-              name="max_tokens"
-              label="Maximum Tokens"
-              style={{ width: '50%' }}
-              extra="Maximum number of tokens to generate (1-8000)"
-            >
-              <InputNumber
-                min={1}
-                max={8000}
-                placeholder="1000"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
+                {!isAgentSelected && (
+                  <>
+                    <Space.Compact style={{ width: '100%' }}>
+                      <Form.Item
+                        name="max_tokens"
+                        label="Maximum Tokens"
+                        style={{ width: '50%' }}
+                        extra="Maximum number of tokens to generate (1-8000)"
+                      >
+                        <InputNumber
+                          min={1}
+                          max={8000}
+                          placeholder="1000"
+                          style={{ width: '100%' }}
+                        />
+                      </Form.Item>
 
-            <Form.Item
-              name="temperature"
-              label="Temperature"
-              style={{ width: '50%' }}
-              extra="Controls randomness (0.0 = deterministic, 2.0 = very random)"
-            >
-              <InputNumber
-                min={0}
-                max={2}
-                step={0.1}
-                placeholder="0.7"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Space.Compact>
-        )}
+                      <Form.Item
+                        name="temperature"
+                        label="Temperature"
+                        style={{ width: '50%' }}
+                        extra="Controls randomness (0.0 = deterministic, 2.0 = very random)"
+                      >
+                        <InputNumber
+                          min={0}
+                          max={2}
+                          step={0.1}
+                          placeholder="0.7"
+                          style={{ width: '100%' }}
+                        />
+                      </Form.Item>
+                    </Space.Compact>
 
-        {!isAgentSelected && (
-          <Form.Item
-            name="system_message"
-            label={
-              <Space>
-                System Message
-                <Popover 
-                  content={variableInstructions} 
-                  title="Template Variables" 
-                  trigger="click"
-                  placement="topLeft"
-                >
-                  <Button 
-                    type="text" 
-                    size="small" 
-                    icon={<QuestionCircleOutlined />}
-                    style={{ color: '#1890ff' }}
-                  />
-                </Popover>
-              </Space>
-            }
-            extra="Optional system message to guide the AI's behavior and tone. Template variables are supported."
-          >
-            <TextArea
-              rows={2}
-              placeholder="You are a helpful assistant that..."
-            />
-          </Form.Item>
-        )}
+                    <Form.Item
+                      name="system_message"
+                      label={
+                        <Space>
+                          System Message
+                          <Popover 
+                            content={variableInstructions} 
+                            title="Template Variables" 
+                            trigger="click"
+                            placement="topLeft"
+                          >
+                            <Button 
+                              type="text" 
+                              size="small" 
+                              icon={<QuestionCircleOutlined />}
+                              style={{ color: '#1890ff' }}
+                            />
+                          </Popover>
+                        </Space>
+                      }
+                      extra="Optional system message to guide the AI's behavior and tone. Template variables are supported."
+                    >
+                      <TextArea
+                        rows={2}
+                        placeholder="You are a helpful assistant that..."
+                      />
+                    </Form.Item>
+                  </>
+                )}
+              </>
+            );
+          }}
+        </Form.Item>
+
+        <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.agent !== currentValues.agent} noStyle>
+          {({ getFieldValue }) => {
+            const selectedAgent = getFieldValue('agent');
+            const isAgentSelected = !!selectedAgent;
+
+            return (
+              <div style={{ marginTop: 24, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+                <Text strong style={{ color: '#389e0d' }}>Output Variables:</Text>
+                <ul style={{ margin: '8px 0 0 0', color: '#389e0d' }}>
+                  <li><Text code>generated_text</Text> - The text generated by the AI model</li>
+                  <li><Text code>token_count</Text> - Number of tokens used in generation</li>
+                  <li><Text code>model_used</Text> - The actual underlying model that processed the request</li>
+                  <li><Text code>provider_used</Text> - The provider of the model used</li>
+                  {isAgentSelected && (
+                    <li><Text code>agent_used</Text> - The name of the agent that was used</li>
+                  )}
+                  <li><Text code>success</Text> - Whether the generation was successful</li>
+                </ul>
+              </div>
+            );
+          }}
+        </Form.Item>
       </Form>
-
-      <div style={{ marginTop: 24, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
-        <Text strong style={{ color: '#389e0d' }}>Output Variables:</Text>
-        <ul style={{ margin: '8px 0 0 0', color: '#389e0d' }}>
-          <li><Text code>generated_text</Text> - The text generated by the AI model</li>
-          <li><Text code>token_count</Text> - Number of tokens used in generation</li>
-          <li><Text code>model_used</Text> - The actual underlying model that processed the request</li>
-          <li><Text code>provider_used</Text> - The provider of the model used</li>
-          {isAgentSelected && (
-            <li><Text code>agent_used</Text> - The name of the agent that was used</li>
-          )}
-          <li><Text code>success</Text> - Whether the generation was successful</li>
-        </ul>
-      </div>
     </div>
   );
 }
