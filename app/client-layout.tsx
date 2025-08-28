@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Layout, Menu, Button, Dropdown, Avatar, Typography, Spin, Tooltip } from 'antd';
 import { UserProvider } from '@/contexts/UserContext';
+import { ConfigurationProvider } from '@/contexts/ConfigurationContext';
 import { api } from '@/lib/api';
 import {
   HomeOutlined,
@@ -12,6 +13,8 @@ import {
   PlusOutlined,
   FolderOpenOutlined,
   BranchesOutlined,
+  BankOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -95,7 +98,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   // Return simple layout for auth routes and error pages
   if (isAuthRoute || isErrorRoute) {
-    return <UserProvider>{children}</UserProvider>;
+    return (
+      <UserProvider>
+        <ConfigurationProvider>{children}</ConfigurationProvider>
+      </UserProvider>
+    );
   }
 
   if (isLoading) {
@@ -122,6 +129,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     ],
   };
 
+  const isSuper = user?.role === 'super';
+
   const menuItems = [
     {
       key: 'home-menu',
@@ -141,6 +150,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       label: 'Workflows',
       onClick: () => router.push('/workflows'),
     },
+    ...(isSuper
+      ? [
+          {
+            key: 'accounts-menu',
+            icon: <BankOutlined />,
+            label: 'Accounts',
+            onClick: () => router.push('/accounts'),
+          },
+          {
+            key: 'agents-menu',
+            icon: <RobotOutlined />,
+            label: 'Agents',
+            onClick: () => router.push('/agents'),
+          },
+        ]
+      : []),
     // {
     //   key: "3",
     //   icon: <TeamOutlined />,
@@ -160,7 +185,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <UserProvider>
-      <Layout style={{ minHeight: '100vh' }}>
+      <ConfigurationProvider>
+        <Layout style={{ minHeight: '100vh' }}>
         {/* Sidebar */}
         <Sider
           style={{ borderRight: '1px solid #ccc' }}
@@ -202,6 +228,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <Content style={{ padding: 0 }}>{children}</Content>
         </Layout>
       </Layout>
+      </ConfigurationProvider>
     </UserProvider>
   );
 }

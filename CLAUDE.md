@@ -82,7 +82,7 @@ npm run lint        # ESLint with Next.js rules
 - **Parent Directories**: Related components are grouped under parent directories (e.g., `Workflows/` contains workflow-related components)
 - **Module SCSS**: Always use SCSS modules with camelCase class names
 - **Ant Design Preference**: Prefer Ant Design components over custom implementations
-- **Table Pattern**: For tables, separate column definitions into `columns.tsx` files as siblings to the main component
+- **Table Pattern**: For tables, ALWAYS separate column definitions into `columns.tsx` files as siblings to the main component. This keeps components clean and column definitions reusable.
 
 ### State Management
 - React Query for server state and API calls

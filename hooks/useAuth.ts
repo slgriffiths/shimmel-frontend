@@ -1,7 +1,7 @@
-"use client";
-import { useState, useEffect } from "react";
-import { api, resetRefreshState } from "@/lib/api";
-import { useRouter } from "next/navigation";
+'use client';
+import { useState, useEffect } from 'react';
+import { api, resetRefreshState } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -10,7 +10,7 @@ const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-passwo
 const isPublicRoute = () => {
   if (typeof window === 'undefined') return false;
   const currentPath = window.location.pathname;
-  return PUBLIC_ROUTES.some(route => currentPath.startsWith(route));
+  return PUBLIC_ROUTES.some((route) => currentPath.startsWith(route));
 };
 
 export const useAuth = () => {
@@ -28,14 +28,14 @@ export const useAuth = () => {
       setIsLoading(false);
     }
     const cleanup = startHealthCheck();
-    
+
     // Listen for token refresh events from API interceptor
     const handleTokenRefresh = (event: CustomEvent) => {
       updateAccessToken(event.detail);
     };
-    
+
     window.addEventListener('tokenRefresh', handleTokenRefresh as EventListener);
-    
+
     return () => {
       cleanup && cleanup();
       window.removeEventListener('tokenRefresh', handleTokenRefresh as EventListener);
@@ -44,8 +44,8 @@ export const useAuth = () => {
 
   const fetchUser = async () => {
     try {
-      const { data } = await api.get("/auth/me");
-      setUser(data);
+      const { data } = await api.get('/auth/me');
+      setUser(data.user);
     } catch (error) {
       setUser(null);
       setAccessToken(null);
@@ -65,7 +65,7 @@ export const useAuth = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -73,16 +73,16 @@ export const useAuth = () => {
       }
 
       const { user, access_token } = await response.json();
-      
+
       // Reset refresh state on successful login
       resetRefreshState();
-      
+
       updateAccessToken(access_token);
       setUser(user);
-      router.push("/dashboard");
+      router.push('/dashboard');
       return { success: true };
     } catch (error) {
-      console.error("Login failed", error);
+      console.error('Login failed', error);
       return { success: false, error: error instanceof Error ? error.message : 'Login failed' };
     }
   };
@@ -91,16 +91,16 @@ export const useAuth = () => {
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       });
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error('Logout failed', error);
     } finally {
       setUser(null);
       setAccessToken(null);
-      api.defaults.headers.Authorization = "";
+      api.defaults.headers.Authorization = '';
       if (!isPublicRoute()) {
-        router.push("/login");
+        router.push('/login');
       }
     }
   };
@@ -112,8 +112,8 @@ export const useAuth = () => {
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/health`, {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-          credentials: 'include'
+          headers: { Authorization: `Bearer ${accessToken}` },
+          credentials: 'include',
         });
 
         if (response.ok) {
@@ -133,12 +133,12 @@ export const useAuth = () => {
     return () => clearInterval(interval);
   };
 
-  return { 
-    user, 
-    isLoading, 
-    accessToken, 
-    login, 
-    logout, 
-    updateAccessToken 
+  return {
+    user,
+    isLoading,
+    accessToken,
+    login,
+    logout,
+    updateAccessToken,
   };
 };
