@@ -1,5 +1,5 @@
 import { Form, Input, Select, InputNumber, Typography, Space, Popover, Button } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { useConfiguration } from '@/contexts/ConfigurationContext';
 
@@ -7,20 +7,18 @@ const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface GenerateTextConfig {
+interface GenerateTextWithAgentConfig {
   prompt?: string;
-  model?: string;
+  agent_id?: number;
   max_tokens?: number;
-  temperature?: number;
-  system_message?: string;
 }
 
-interface GenerateTextActionConfigProps {
-  config: GenerateTextConfig;
-  onConfigChange: (config: GenerateTextConfig) => void;
+interface GenerateTextWithAgentActionConfigProps {
+  config: GenerateTextWithAgentConfig;
+  onConfigChange: (config: GenerateTextWithAgentConfig) => void;
 }
 
-export default function GenerateTextActionConfig({ config, onConfigChange }: GenerateTextActionConfigProps) {
+export default function GenerateTextWithAgentActionConfig({ config, onConfigChange }: GenerateTextWithAgentActionConfigProps) {
   const [form] = Form.useForm();
   const { configuration } = useConfiguration();
 
@@ -61,32 +59,31 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
     </div>
   );
 
-  // Get available LLM models from configuration context
-  const availableModels = configuration?.available_llm_models || [];
+  // Get available agents from configuration context
+  const agents = configuration?.available_agents || [];
 
   useEffect(() => {
     form.setFieldsValue(config);
   }, [config, form]);
 
-  const handleValuesChange = (changedValues: any, allValues: GenerateTextConfig) => {
+  const handleValuesChange = (changedValues: any, allValues: GenerateTextWithAgentConfig) => {
     onConfigChange(allValues);
   };
 
   return (
     <div>
-      <Title level={4}>Generate Text Configuration</Title>
+      <Title level={4}>Generate Text with Agent Configuration</Title>
       <Paragraph type="secondary">
-        Configure this action to generate text using AI models. Choose your model, set parameters,
-        and provide a prompt to generate AI-powered text content.
+        Configure this action to generate text using a pre-configured AI agent. The agent's 
+        model, temperature, and system instructions are already set up.
       </Paragraph>
 
       <Form
         form={form}
         layout="vertical"
         initialValues={{
-          model: availableModels.length > 0 ? availableModels[0].id : '',
+          agent_id: agents.length > 0 ? agents[0].id : undefined,
           max_tokens: 1000,
-          temperature: 0.7,
           ...config
         }}
         onValuesChange={handleValuesChange}
@@ -112,7 +109,7 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
             </Space>
           }
           rules={[{ required: true, message: 'Please enter a prompt' }]}
-          extra="The prompt to send to the AI model. Click the ? icon for template variable examples."
+          extra="The prompt to send to the AI agent. Click the ? icon for template variable examples."
         >
           <TextArea
             rows={4}
@@ -122,37 +119,38 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
         </Form.Item>
 
         <Form.Item
-          name="model"
-          label="AI Model"
-          rules={[{ required: true, message: 'Please select a model' }]}
-          extra="Choose which AI model to use for text generation"
+          name="agent_id"
+          label="AI Agent"
+          rules={[{ required: true, message: 'Please select an agent' }]}
+          extra="Select the AI agent to use for text generation"
         >
           <Select 
-            placeholder="Select AI model"
+            placeholder="Select an AI agent"
             optionLabelProp="label"
           >
-            {availableModels.map(model => (
+            {agents.map(agent => (
               <Option 
-                key={model.id} 
-                value={model.id}
-                label={model.name}
+                key={agent.id} 
+                value={agent.id}
+                label={agent.name}
               >
                 <div style={{ padding: '4px 0' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
-                    {model.name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <RobotOutlined style={{ color: '#1890ff' }} />
+                    <span style={{ fontWeight: 'bold' }}>{agent.name}</span>
                   </div>
-                  {model.description && (
+                  {agent.description && (
                     <div style={{ 
                       fontSize: '12px', 
                       color: '#666', 
                       lineHeight: '1.3',
                       whiteSpace: 'normal'
                     }}>
-                      {model.description}
+                      {agent.description}
                     </div>
                   )}
                   <div style={{ fontSize: '11px', color: '#999', marginTop: 2 }}>
-                    Provider: {model.provider}
+                    Uses: {agent.underlying_model} • Temp: {agent.temperature}
                   </div>
                 </div>
               </Option>
@@ -160,74 +158,37 @@ export default function GenerateTextActionConfig({ config, onConfigChange }: Gen
           </Select>
         </Form.Item>
 
-        <Space.Compact style={{ width: '100%' }}>
-          <Form.Item
-            name="max_tokens"
-            label="Maximum Tokens"
-            style={{ width: '50%' }}
-            extra="Maximum number of tokens to generate (1-8000)"
-          >
-            <InputNumber
-              min={1}
-              max={8000}
-              placeholder="1000"
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="temperature"
-            label="Temperature"
-            style={{ width: '50%' }}
-            extra="Controls randomness (0.0 = deterministic, 2.0 = very random)"
-          >
-            <InputNumber
-              min={0}
-              max={2}
-              step={0.1}
-              placeholder="0.7"
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        </Space.Compact>
-
         <Form.Item
-          name="system_message"
-          label={
-            <Space>
-              System Message
-              <Popover 
-                content={variableInstructions} 
-                title="Template Variables" 
-                trigger="click"
-                placement="topLeft"
-              >
-                <Button 
-                  type="text" 
-                  size="small" 
-                  icon={<QuestionCircleOutlined />}
-                  style={{ color: '#1890ff' }}
-                />
-              </Popover>
-            </Space>
-          }
-          extra="Optional system message to guide the AI's behavior and tone. Template variables are supported."
+          name="max_tokens"
+          label="Maximum Tokens (Optional)"
+          extra="Override the agent's default token limit (1-8000). Leave empty to use agent's default."
         >
-          <TextArea
-            rows={2}
-            placeholder="You are a helpful assistant that..."
+          <InputNumber
+            min={1}
+            max={8000}
+            placeholder="1000"
+            style={{ width: '100%' }}
           />
         </Form.Item>
       </Form>
 
-      <div style={{ marginTop: 24, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+      <div style={{ marginTop: 24, padding: 12, background: '#f0f9ff', border: '1px solid #bae7ff', borderRadius: 6 }}>
+        <Text strong style={{ color: '#1890ff' }}>Agent-Based Configuration:</Text>
+        <ul style={{ margin: '8px 0 0 0', color: '#1890ff', fontSize: 12 }}>
+          <li>Model and temperature are pre-configured in the selected agent</li>
+          <li>System instructions are built into the agent</li>
+          <li>Only prompt and optional token limit need to be specified</li>
+        </ul>
+      </div>
+
+      <div style={{ marginTop: 16, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
         <Text strong style={{ color: '#389e0d' }}>Output Variables:</Text>
         <ul style={{ margin: '8px 0 0 0', color: '#389e0d' }}>
-          <li><Text code>generated_text</Text> - The text generated by the AI model</li>
+          <li><Text code>generated_text</Text> - The text generated by the AI agent</li>
           <li><Text code>token_count</Text> - Number of tokens used in generation</li>
-          <li><Text code>model_used</Text> - The actual model that processed the request</li>
-          <li><Text code>provider_used</Text> - The provider of the model used</li>
-          <li><Text code>success</Text> - Whether the generation was successful</li>
+          <li><Text code>agent_used</Text> - The name of the agent that was used</li>
+          <li><Text code>model_used</Text> - The underlying model used by the agent</li>
+          <li><Text code>finish_reason</Text> - Reason why generation stopped</li>
         </ul>
       </div>
     </div>

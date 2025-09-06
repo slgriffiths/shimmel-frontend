@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import GenerateTextActionConfig from './GenerateTextActionConfig';
+import GenerateTextWithAgentActionConfig from './GenerateTextWithAgentActionConfig';
 import SendEmailActionConfig from './SendEmailActionConfig';
 
 const { Paragraph } = Typography;
@@ -15,6 +16,14 @@ export default function ActionConfig({ actionType, config, onConfigChange }: Act
     case 'Workflow::Action::GenerateText':
       return (
         <GenerateTextActionConfig
+          config={config}
+          onConfigChange={onConfigChange}
+        />
+      );
+    
+    case 'Workflow::Action::GenerateTextWithAgent':
+      return (
+        <GenerateTextWithAgentActionConfig
           config={config}
           onConfigChange={onConfigChange}
         />
