@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Typography, Button, Form, Input, Select, InputNumber, Card, Divider, message, Spin } from 'antd';
-import { SaveOutlined, CloseOutlined } from '@ant-design/icons';
+import { Typography, Button, Form, Input, Select, InputNumber, Card, Divider, message, Spin, Tag } from 'antd';
+import { SaveOutlined, CloseOutlined, CopyOutlined } from '@ant-design/icons';
 import { useRouter, useParams } from 'next/navigation';
 import { useConfiguration } from '@/contexts/ConfigurationContext';
 import { api } from '@/lib/api';
+import CloneAgentModal from '@/components/AgentsList/CloneAgentModal';
 import type { Agent, AvailableModel } from '@/contexts/ConfigurationContext';
 
 const { Title } = Typography;
@@ -27,6 +28,7 @@ export default function AgentDetailPage() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cloneModalOpen, setCloneModalOpen] = useState(false);
 
   const agentId = params.id as string;
   const availableModels = configuration?.available_llm_models || [];
@@ -77,6 +79,15 @@ export default function AgentDetailPage() {
     router.push('/agents');
   };
 
+  const handleClone = () => {
+    setCloneModalOpen(true);
+  };
+
+  const handleCloneSuccess = () => {
+    message.success('Agent cloned successfully');
+    refreshAgents();
+  };
+
   if (loading) {
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
@@ -98,8 +109,22 @@ export default function AgentDetailPage() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ margin: 0 }}>{agent.name}</Title>
         <div>
+          <Title level={2} style={{ margin: 0 }}>{agent.name}</Title>
+          <div style={{ marginTop: 8 }}>
+            <Tag color={agent.account_id ? 'blue' : 'green'}>
+              {agent.account_name || (agent.account_id ? `Account ${agent.account_id}` : 'Global')}
+            </Tag>
+          </div>
+        </div>
+        <div>
+          <Button 
+            icon={<CopyOutlined />} 
+            onClick={handleClone}
+            style={{ marginRight: 8 }}
+          >
+            Clone
+          </Button>
           <Button 
             icon={<CloseOutlined />} 
             onClick={handleCancel}
@@ -188,6 +213,13 @@ export default function AgentDetailPage() {
           </Form.Item>
         </Form>
       </Card>
+
+      <CloneAgentModal
+        open={cloneModalOpen}
+        onClose={() => setCloneModalOpen(false)}
+        onSuccess={handleCloneSuccess}
+        agent={agent}
+      />
     </div>
   );
 }
