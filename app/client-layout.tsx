@@ -116,9 +116,16 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const profileMenu = {
     items: [
       {
-        key: 'settings',
+        key: 'user-settings',
         icon: <SettingOutlined />,
-        label: 'Settings',
+        label: 'User Settings',
+        onClick: () => router.push('/settings/user'),
+      },
+      {
+        key: 'account-settings',
+        icon: <SettingOutlined />,
+        label: 'Account Settings',
+        onClick: () => router.push('/settings/account'),
       },
       {
         key: 'logout',
