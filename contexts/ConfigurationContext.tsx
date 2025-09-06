@@ -22,9 +22,15 @@ export interface Agent {
   system_message: string;
   underlying_model: string;
   temperature: number;
-  account_id: number;
+  account_id: number | null;
+  account_name?: string;
+  parent_agent_id?: number | null;
+  parent_agent_name?: string | null;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
+  can_be_deleted?: boolean;
+  child_agents_count?: number;
 }
 
 export interface UserConfiguration {

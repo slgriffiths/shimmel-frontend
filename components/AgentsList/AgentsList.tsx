@@ -1,17 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Typography, Button, Tabs, Card, Empty, Descriptions, Tag, Space } from 'antd';
-import { PlusOutlined, RobotOutlined } from '@ant-design/icons';
+import { Typography, Button, Table, Empty, message, Modal } from 'antd';
+import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import { useConfiguration } from '@/contexts/ConfigurationContext';
+import { api } from '@/lib/api';
 import CreateAgentDrawer from './CreateAgentDrawer/CreateAgentDrawer';
+import CloneAgentModal from './CloneAgentModal';
+import { getAgentColumns } from './columns';
 import type { Agent } from '@/contexts/ConfigurationContext';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
+const { confirm } = Modal;
 
 export default function AgentsList() {
-  const { configuration, loading } = useConfiguration();
+  const router = useRouter();
+  const { configuration, loading, refreshAgents } = useConfiguration();
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   const agents = configuration?.available_agents || [];
@@ -21,64 +28,53 @@ export default function AgentsList() {
   };
 
   const handleCreateSuccess = () => {
-    // Refresh will be handled by the drawer
+    refreshAgents();
   };
 
-  const tabItems = agents.map((agent) => ({
-    key: agent.id.toString(),
-    label: (
-      <Space>
-        <RobotOutlined />
-        {agent.name}
-      </Space>
-    ),
-    children: (
-      <Card style={{ height: 'calc(100vh - 200px)', overflow: 'auto' }}>
-        <Descriptions column={1} bordered size="small">
-          <Descriptions.Item label="Name">
-            <Text strong>{agent.name}</Text>
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="Description">
-            {agent.description || <Text type="secondary">No description provided</Text>}
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="LLM Model">
-            <Tag color="blue">{agent.underlying_model}</Tag>
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="Temperature">
-            <Tag>{agent.temperature}</Tag>
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="System Instructions">
-            <div 
-              style={{ 
-                backgroundColor: '#f6f8fa', 
-                padding: 12, 
-                borderRadius: 6, 
-                border: '1px solid #e1e4e8',
-                maxHeight: 300,
-                overflow: 'auto'
-              }}
-            >
-              <Text style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 12 }}>
-                {agent.system_message}
-              </Text>
-            </div>
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="Created">
-            {new Date(agent.created_at).toLocaleString()}
-          </Descriptions.Item>
-          
-          <Descriptions.Item label="Last Modified">
-            {new Date(agent.updated_at).toLocaleString()}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
-    ),
-  }));
+  const handleEditAgent = (agentId: number) => {
+    router.push(`/agents/${agentId}`);
+  };
+
+  const handleCloneAgent = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setCloneModalOpen(true);
+  };
+
+  const handleCloneSuccess = () => {
+    refreshAgents();
+  };
+
+  const handleDeleteAgent = (agent: Agent) => {
+    if (!agent.can_be_deleted) {
+      message.warning('This agent cannot be deleted');
+      return;
+    }
+
+    confirm({
+      title: `Delete Agent "${agent.name}"?`,
+      icon: <ExclamationCircleOutlined />,
+      content: 'This action cannot be undone. Are you sure you want to delete this agent?',
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      async onOk() {
+        try {
+          await api.delete(`/agents/${agent.id}`);
+          message.success('Agent deleted successfully');
+          refreshAgents();
+        } catch (error) {
+          console.error('Failed to delete agent:', error);
+          message.error('Failed to delete agent');
+        }
+      },
+    });
+  };
+
+  const handleRowClick = (record: Agent) => {
+    handleEditAgent(record.id);
+  };
+
+  const columns = getAgentColumns(handleEditAgent, handleCloneAgent, handleDeleteAgent);
 
   if (loading) {
     return (
@@ -92,7 +88,7 @@ export default function AgentsList() {
   }
 
   return (
-    <div style={{ padding: 24, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>Agents</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateAgent}>
@@ -110,21 +106,34 @@ export default function AgentsList() {
           </Button>
         </Empty>
       ) : (
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          <Tabs
-            type="line"
-            tabPosition="left"
-            items={tabItems}
-            style={{ height: '100%' }}
-            size="small"
-          />
-        </div>
+        <Table
+          columns={columns}
+          dataSource={agents}
+          rowKey="id"
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: { cursor: 'pointer' }
+          })}
+          pagination={{
+            pageSize: 20,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} agents`,
+          }}
+        />
       )}
 
       <CreateAgentDrawer
         open={createDrawerOpen}
         onClose={() => setCreateDrawerOpen(false)}
         onSuccess={handleCreateSuccess}
+      />
+
+      <CloneAgentModal
+        open={cloneModalOpen}
+        onClose={() => setCloneModalOpen(false)}
+        onSuccess={handleCloneSuccess}
+        agent={selectedAgent}
       />
     </div>
   );
