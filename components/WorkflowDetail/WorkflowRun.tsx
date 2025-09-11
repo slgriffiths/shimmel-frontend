@@ -3,6 +3,8 @@ import { Typography, Button, Form, Input, Select, InputNumber, DatePicker, Uploa
 import { PlayCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { api } from '@/lib/api';
+import { SessionFileUpload } from '@/components/FileUpload';
+import type { FileUploadResponse } from '@/types/fileUpload';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -43,6 +45,8 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
   const [runData, setRunData] = useState<WorkflowRunData | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [uploadSessionId, setUploadSessionId] = useState<string>();
+  const [fileUploads, setFileUploads] = useState<Record<string, FileUploadResponse['file_info'][]>>({});
 
   // Get the first trigger (assuming one trigger per workflow for now)
   const trigger = workflow?.triggers?.[0];
@@ -88,10 +92,18 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
       // Get form values
       const formValues = form.getFieldsValue();
       
-      // Submit the run request with correct payload structure
-      const { data } = await api.post(`/workflows/${workflowId}/run`, {
+      // Prepare payload
+      const payload: any = {
         input_data: formValues
-      });
+      };
+      
+      // Include upload session if files were uploaded
+      if (uploadSessionId) {
+        payload.upload_session_id = uploadSessionId;
+      }
+      
+      // Submit the run request with correct payload structure
+      const { data } = await api.post(`/workflows/${workflowId}/run`, payload);
       
       // Set initial run data
       setRunData(data);
@@ -184,6 +196,47 @@ export default function WorkflowRun({ workflowId }: WorkflowRunProps) {
           <Form.Item key={field.name} {...commonProps}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
+        );
+      
+      case 'file':
+      case 'file_upload':
+        return (
+          <div key={field.name} style={{ marginBottom: '24px' }}>
+            <SessionFileUpload
+              onFilesChange={(files, sessionId) => {
+                // Update file uploads state
+                setFileUploads(prev => ({
+                  ...prev,
+                  [field.name]: files
+                }));
+                
+                // Update form field value with file IDs
+                form.setFieldsValue({
+                  [field.name]: files.map(f => f.id)
+                });
+                
+                // Set upload session ID if not already set
+                if (sessionId && !uploadSessionId) {
+                  setUploadSessionId(sessionId);
+                }
+              }}
+              onSessionReady={(sessionId) => {
+                if (!uploadSessionId) {
+                  setUploadSessionId(sessionId);
+                }
+              }}
+              maxFiles={field.validation_rules?.max_files || 10}
+              disabled={isRunning}
+              title={field.label}
+              description={field.help_text || "Upload files that will be processed by this workflow"}
+              showTitle={true}
+            />
+            
+            {/* Hidden form field to store file IDs */}
+            <Form.Item name={field.name} rules={commonProps.rules} style={{ display: 'none' }}>
+              <Input />
+            </Form.Item>
+          </div>
         );
       
       default:
