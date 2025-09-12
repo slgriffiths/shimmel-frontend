@@ -4,7 +4,7 @@ import { api, resetRefreshState } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invitation'];
 
 // Helper function to check if current route is public
 const isPublicRoute = () => {

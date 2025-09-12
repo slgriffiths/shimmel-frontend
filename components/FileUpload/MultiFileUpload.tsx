@@ -65,7 +65,7 @@ export default function MultiFileUpload({
   }, [currentSessionId, onSessionCreated]);
 
   const handleChange = useCallback((info: any) => {
-    let newFileList = [...info.fileList];
+    const newFileList = [...info.fileList];
     
     // Update file list
     setFileList(newFileList);

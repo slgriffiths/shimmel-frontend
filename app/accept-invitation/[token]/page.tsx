@@ -58,7 +58,7 @@ export default function AcceptInvitationPage() {
       
       // Redirect to login page after brief delay
       setTimeout(() => {
-        router.push('/auth/login');
+        router.push('/login');
       }, 2000);
       
     } catch (error: any) {
@@ -77,16 +77,26 @@ export default function AcceptInvitationPage() {
 
   if (initialLoading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
         alignItems: 'center',
-        background: '#f0f2f5'
+        justifyContent: 'center',
+        padding: '20px'
       }}>
-        <Card style={{ minWidth: 400, textAlign: 'center' }}>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: 400,
+            borderRadius: 16,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }}
+          styles={{ body: { padding: '40px 32px', textAlign: 'center' } }}
+        >
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, color: '#1f2937' }}>
             Loading invitation details...
           </div>
         </Card>
@@ -96,25 +106,43 @@ export default function AcceptInvitationPage() {
 
   if (error) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
         alignItems: 'center',
-        background: '#f0f2f5'
+        justifyContent: 'center',
+        padding: '20px'
       }}>
-        <Card style={{ minWidth: 400 }}>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: 400,
+            borderRadius: 16,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }}
+          styles={{ body: { padding: '40px 32px' } }}
+        >
           <Alert
             message="Invitation Error"
             description={error}
             type="error"
             showIcon
-            style={{ marginBottom: 24 }}
+            style={{ marginBottom: 24, borderRadius: 8 }}
           />
           <Button 
             type="primary" 
             block 
-            onClick={() => router.push('/auth/login')}
+            onClick={() => router.push('/login')}
+            style={{
+              height: 48,
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 500,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none'
+            }}
           >
             Go to Sign In
           </Button>
@@ -128,33 +156,45 @@ export default function AcceptInvitationPage() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
       alignItems: 'center',
-      background: '#f0f2f5'
+      justifyContent: 'center',
+      padding: '20px'
     }}>
-      <Card style={{ minWidth: 500 }}>
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 500,
+          borderRadius: 16,
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+          border: 'none'
+        }}
+        styles={{ body: { padding: '40px 32px' } }}
+      >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2}>Welcome to Shimmel AI</Title>
-          <Paragraph type="secondary">
+          <Title level={2} style={{ marginBottom: 8, color: '#1f2937' }}>
+            Welcome to Shimmel AI
+          </Title>
+          <Paragraph type="secondary" style={{ fontSize: 16 }}>
             You've been invited to join the team. Please set up your account below.
           </Paragraph>
         </div>
 
-        <div style={{ marginBottom: 24, padding: 16, background: '#f6ffed', borderRadius: 6 }}>
+        <div style={{ marginBottom: 24, padding: 16, background: '#f6ffed', borderRadius: 8 }}>
           <Space direction="vertical" style={{ width: '100%' }}>
             <Space>
-              <UserOutlined />
+              <UserOutlined style={{ color: '#667eea' }} />
               <strong>Name:</strong> {invitation.first_name} {invitation.last_name}
             </Space>
             <Space>
-              <MailOutlined />
+              <MailOutlined style={{ color: '#667eea' }} />
               <strong>Email:</strong> {invitation.email}
             </Space>
             <Space>
-              <TeamOutlined />
+              <TeamOutlined style={{ color: '#667eea' }} />
               <strong>Account:</strong> {invitation.account_name}
             </Space>
           </Space>
@@ -164,6 +204,7 @@ export default function AcceptInvitationPage() {
           form={form}
           layout="vertical"
           onFinish={handleAcceptInvitation}
+          size="large"
         >
           <Form.Item
             label="Create Password"
@@ -174,9 +215,9 @@ export default function AcceptInvitationPage() {
             ]}
           >
             <Input.Password
-              prefix={<LockOutlined />}
+              prefix={<LockOutlined style={{ color: '#9ca3af' }} />}
               placeholder="Enter your password"
-              size="large"
+              style={{ borderRadius: 8 }}
             />
           </Form.Item>
 
@@ -197,9 +238,9 @@ export default function AcceptInvitationPage() {
             ]}
           >
             <Input.Password
-              prefix={<LockOutlined />}
+              prefix={<LockOutlined style={{ color: '#9ca3af' }} />}
               placeholder="Confirm your password"
-              size="large"
+              style={{ borderRadius: 8 }}
             />
           </Form.Item>
 
@@ -210,6 +251,14 @@ export default function AcceptInvitationPage() {
               size="large"
               loading={loading}
               block
+              style={{
+                height: 48,
+                borderRadius: 8,
+                fontSize: 16,
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none'
+              }}
             >
               Create Account
             </Button>
@@ -217,9 +266,9 @@ export default function AcceptInvitationPage() {
         </Form>
 
         <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Paragraph type="secondary">
+          <Paragraph type="secondary" style={{ fontSize: 14 }}>
             Already have an account?{' '}
-            <a onClick={() => router.push('/auth/login')}>
+            <a onClick={() => router.push('/login')} style={{ color: '#667eea', fontWeight: 500, cursor: 'pointer' }}>
               Sign in here
             </a>
           </Paragraph>
