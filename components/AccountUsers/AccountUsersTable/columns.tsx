@@ -1,12 +1,14 @@
 import { Button, Space, Tag, Tooltip } from 'antd';
-import { EditOutlined, EyeOutlined, UserDeleteOutlined, UserAddOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, UserDeleteOutlined, UserAddOutlined, MailOutlined } from '@ant-design/icons';
+import { formatTimeAgo } from '@/utils/dateUtils';
 import type { User } from '@/types/user';
 
 export const getUserColumns = (
   handleViewUser: (user: User) => void,
   handleEditUser: (user: User) => void,
   handleDisableUser: (user: User) => void,
-  handleEnableUser: (user: User) => void
+  handleEnableUser: (user: User) => void,
+  handleResendInvitation: (user: User) => void
 ) => [
   {
     title: 'Name',
@@ -43,6 +45,39 @@ export const getUserColumns = (
         {record.disabled_at ? 'Disabled' : 'Active'}
       </Tag>
     ),
+  },
+  {
+    title: 'Invitation',
+    key: 'invitation_status',
+    render: (_, record: User) => {
+      if (record.invitation_accepted_at) {
+        return (
+          <Tooltip title={`Invite accepted ${formatTimeAgo(record.invitation_accepted_at)}`}>
+            <Tag color="green">
+              Joined
+            </Tag>
+          </Tooltip>
+        );
+      } else if (record.invitation_pending) {
+        return (
+          <Tag color="orange">
+            Pending
+          </Tag>
+        );
+      } else if (record.invitation_sent_at && !record.invitation_pending) {
+        return (
+          <Tag color="blue">
+            Invited
+          </Tag>
+        );
+      } else {
+        return (
+          <Tag color="green">
+            Active
+          </Tag>
+        );
+      }
+    },
   },
   {
     title: 'Last Sign In',
@@ -82,6 +117,18 @@ export const getUserColumns = (
               e.stopPropagation();
               handleEditUser(record);
             }}
+          />
+        </Tooltip>
+
+        <Tooltip title={`Resend Invitation • Last invited ${formatTimeAgo(record.invitation_sent_at)}`}>
+          <Button
+            type="text"
+            icon={<MailOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleResendInvitation(record);
+            }}
+            style={{ color: '#1890ff' }}
           />
         </Tooltip>
         

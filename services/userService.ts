@@ -52,4 +52,11 @@ export class UserService {
     });
     return data;
   }
+
+  /**
+   * Resend invitation to a user
+   */
+  static async resendInvitation(accountId: number, userId: number): Promise<void> {
+    await api.post(`/accounts/${accountId}/users/${userId}/resend_invitation`);
+  }
 }

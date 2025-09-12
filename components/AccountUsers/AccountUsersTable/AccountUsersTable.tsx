@@ -84,6 +84,16 @@ export default function AccountUsersTable({
     }
   };
 
+  const handleResendInvitation = async (user: User) => {
+    try {
+      await UserService.resendInvitation(accountId, user.id);
+      message.success(`Invitation resent to ${user.first_name} ${user.last_name}`);
+    } catch (error) {
+      console.error('Failed to resend invitation:', error);
+      message.error('Failed to resend invitation');
+    }
+  };
+
   const handleRowClick = (record: User) => {
     handleViewUser(record);
   };
@@ -92,7 +102,8 @@ export default function AccountUsersTable({
     handleViewUser,
     handleEditUser,
     handleDisableUser,
-    handleEnableUser
+    handleEnableUser,
+    handleResendInvitation
   );
 
   return (

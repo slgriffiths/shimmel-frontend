@@ -12,6 +12,10 @@ export interface User {
   last_sign_in_at?: string | null;
   account_id: number;
   account_name?: string;
+  invitation_token?: string | null;
+  invitation_sent_at?: string | null;
+  invitation_accepted_at?: string | null;
+  invitation_pending?: boolean;
 }
 
 export interface CreateUserRequest {
