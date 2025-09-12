@@ -53,7 +53,7 @@ export class AuthService {
     token: string,
     request: ResetPasswordRequest
   ): Promise<ResetPasswordResponse> {
-    const { data } = await api.post(`/password_resets/${token}`, request);
+    const { data } = await api.put(`/password_resets/${token}`, request);
     return data;
   }
 }

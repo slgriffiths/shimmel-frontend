@@ -76,21 +76,31 @@ export default function ResetPasswordPage() {
   };
 
   const handleGoToLogin = () => {
-    router.push('/auth/login');
+    router.push('/login');
   };
 
   if (initialLoading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
         alignItems: 'center',
-        background: '#f0f2f5'
+        justifyContent: 'center',
+        padding: '20px'
       }}>
-        <Card style={{ minWidth: 400, textAlign: 'center' }}>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: 400,
+            borderRadius: 16,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }}
+          styles={{ body: { padding: '40px 32px', textAlign: 'center' } }}
+        >
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, color: '#1f2937' }}>
             Validating reset link...
           </div>
         </Card>
@@ -100,33 +110,54 @@ export default function ResetPasswordPage() {
 
   if (error) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
         alignItems: 'center',
-        background: '#f0f2f5'
+        justifyContent: 'center',
+        padding: '20px'
       }}>
-        <Card style={{ minWidth: 500 }}>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: 500,
+            borderRadius: 16,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }}
+          styles={{ body: { padding: '40px 32px' } }}
+        >
           <Alert
             message="Invalid Reset Link"
             description={error}
             type="error"
             showIcon
-            style={{ marginBottom: 24 }}
+            style={{ marginBottom: 24, borderRadius: 8 }}
           />
           
           <Space direction="vertical" style={{ width: '100%' }}>
-            <Paragraph>
+            <Paragraph style={{ fontSize: 16 }}>
               Your password reset link may have expired or been used already. 
               You can request a new one below.
             </Paragraph>
             
             <Space style={{ width: '100%', justifyContent: 'center' }}>
-              <Button onClick={() => router.push('/forgot-password')}>
+              <Button 
+                onClick={() => router.push('/forgot-password')}
+                style={{ borderRadius: 8 }}
+              >
                 Request New Reset Link
               </Button>
-              <Button type="primary" onClick={handleGoToLogin}>
+              <Button 
+                type="primary" 
+                onClick={handleGoToLogin}
+                style={{
+                  borderRadius: 8,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none'
+                }}
+              >
                 Go to Sign In
               </Button>
             </Space>
@@ -138,17 +169,29 @@ export default function ResetPasswordPage() {
 
   if (resetSuccess) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
         alignItems: 'center',
-        background: '#f0f2f5'
+        justifyContent: 'center',
+        padding: '20px'
       }}>
-        <Card style={{ minWidth: 500, textAlign: 'center' }}>
-          <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
-          <Title level={2}>Password Reset Complete</Title>
-          <Paragraph>
+        <Card
+          style={{
+            width: '100%',
+            maxWidth: 500,
+            borderRadius: 16,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            border: 'none'
+          }}
+          styles={{ body: { padding: '40px 32px', textAlign: 'center' } }}
+        >
+          <CheckCircleOutlined style={{ fontSize: 48, color: '#667eea', marginBottom: 16 }} />
+          <Title level={2} style={{ marginBottom: 8, color: '#1f2937' }}>
+            Password Reset Complete
+          </Title>
+          <Paragraph style={{ fontSize: 16, marginBottom: 24 }}>
             Your password has been successfully reset. You can now sign in with your new password.
           </Paragraph>
           
@@ -156,7 +199,14 @@ export default function ResetPasswordPage() {
             type="primary" 
             size="large"
             onClick={handleGoToLogin}
-            style={{ marginTop: 16 }}
+            style={{
+              height: 48,
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 500,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none'
+            }}
           >
             Sign In Now
           </Button>
@@ -170,24 +220,36 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
       alignItems: 'center',
-      background: '#f0f2f5'
+      justifyContent: 'center',
+      padding: '20px'
     }}>
-      <Card style={{ minWidth: 500 }}>
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 500,
+          borderRadius: 16,
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+          border: 'none'
+        }}
+        styles={{ body: { padding: '40px 32px' } }}
+      >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2}>Reset Your Password</Title>
-          <Paragraph type="secondary">
+          <Title level={2} style={{ marginBottom: 8, color: '#1f2937' }}>
+            Reset Your Password
+          </Title>
+          <Paragraph type="secondary" style={{ fontSize: 16 }}>
             Enter your new password below.
           </Paragraph>
         </div>
 
-        <div style={{ marginBottom: 24, padding: 16, background: '#f6ffed', borderRadius: 6 }}>
+        <div style={{ marginBottom: 24, padding: 16, background: '#f6ffed', borderRadius: 8 }}>
           <Space>
-            <MailOutlined />
+            <MailOutlined style={{ color: '#667eea' }} />
             <strong>Account:</strong> {tokenValidation.email}
           </Space>
         </div>
@@ -196,6 +258,7 @@ export default function ResetPasswordPage() {
           form={form}
           layout="vertical"
           onFinish={handleResetPassword}
+          size="large"
         >
           <Form.Item
             label="New Password"
@@ -206,9 +269,9 @@ export default function ResetPasswordPage() {
             ]}
           >
             <Input.Password
-              prefix={<LockOutlined />}
+              prefix={<LockOutlined style={{ color: '#9ca3af' }} />}
               placeholder="Enter your new password"
-              size="large"
+              style={{ borderRadius: 8 }}
             />
           </Form.Item>
 
@@ -229,9 +292,9 @@ export default function ResetPasswordPage() {
             ]}
           >
             <Input.Password
-              prefix={<LockOutlined />}
+              prefix={<LockOutlined style={{ color: '#9ca3af' }} />}
               placeholder="Confirm your new password"
-              size="large"
+              style={{ borderRadius: 8 }}
             />
           </Form.Item>
 
@@ -242,6 +305,14 @@ export default function ResetPasswordPage() {
               size="large"
               loading={loading}
               block
+              style={{
+                height: 48,
+                borderRadius: 8,
+                fontSize: 16,
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none'
+              }}
             >
               Reset Password
             </Button>
@@ -249,9 +320,9 @@ export default function ResetPasswordPage() {
         </Form>
 
         <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Paragraph type="secondary">
+          <Paragraph type="secondary" style={{ fontSize: 14 }}>
             Remember your password?{' '}
-            <a onClick={handleGoToLogin}>
+            <a onClick={handleGoToLogin} style={{ color: '#667eea', fontWeight: 500, cursor: 'pointer' }}>
               Sign in here
             </a>
           </Paragraph>
@@ -262,7 +333,7 @@ export default function ResetPasswordPage() {
           description="Your password must be at least 8 characters long and should include a mix of letters, numbers, and special characters for security."
           type="info"
           showIcon
-          style={{ marginTop: 24 }}
+          style={{ marginTop: 24, borderRadius: 8 }}
         />
       </Card>
     </div>
