@@ -60,7 +60,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/register') ||
     pathname?.startsWith('/forgot-password') ||
-    pathname?.startsWith('/reset-password');
+    pathname?.startsWith('/reset-password') ||
+    pathname?.startsWith('/accept-invitation');
   const isErrorRoute = pathname === '/404' || pathname === '/not-found';
 
   const navProjects = [
@@ -100,7 +101,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (isAuthRoute || isErrorRoute) {
     return (
       <UserProvider>
-        <ConfigurationProvider>{children}</ConfigurationProvider>
+        <ConfigurationProvider skipAutoFetch={true}>{children}</ConfigurationProvider>
       </UserProvider>
     );
   }

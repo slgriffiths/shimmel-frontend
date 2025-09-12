@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { Typography, Tabs, Spin, message } from 'antd';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import AccountUsers from '@/components/AccountUsers/AccountUsers';
+import AccountWorkflows from '@/components/AccountWorkflows/AccountWorkflows';
+import AccountAgents from '@/components/AccountAgents/AccountAgents';
 
 const { Title } = Typography;
 
@@ -65,17 +68,17 @@ export default function AccountDetailPage() {
     {
       key: 'workflows',
       label: 'Workflows',
-      children: <div>Workflows content coming soon</div>,
+      children: <AccountWorkflows accountId={parseInt(accountId as string)} />,
     },
     {
       key: 'agents',
       label: 'Agents',
-      children: <div>Agents content coming soon</div>,
+      children: <AccountAgents accountId={parseInt(accountId as string)} />,
     },
     {
       key: 'users',
       label: 'Users',
-      children: <div>Users content coming soon</div>,
+      children: <AccountUsers accountId={parseInt(accountId as string)} />,
     },
   ];
 

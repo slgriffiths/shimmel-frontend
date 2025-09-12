@@ -67,11 +67,12 @@ const ConfigurationContext = createContext<ConfigurationContextType | undefined>
 
 interface ConfigurationProviderProps {
   children: ReactNode;
+  skipAutoFetch?: boolean;
 }
 
-export function ConfigurationProvider({ children }: ConfigurationProviderProps) {
+export function ConfigurationProvider({ children, skipAutoFetch = false }: ConfigurationProviderProps) {
   const [configuration, setConfiguration] = useState<UserConfiguration | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipAutoFetch);
 
   const fetchConfiguration = async () => {
     setLoading(true);
@@ -103,8 +104,10 @@ export function ConfigurationProvider({ children }: ConfigurationProviderProps) 
   };
 
   useEffect(() => {
-    fetchConfiguration();
-  }, []);
+    if (!skipAutoFetch) {
+      fetchConfiguration();
+    }
+  }, [skipAutoFetch]);
 
   const contextValue = {
     configuration,

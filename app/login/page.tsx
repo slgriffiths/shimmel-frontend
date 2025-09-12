@@ -146,6 +146,14 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginTop: 24 }}>
           <Space direction="vertical" size={8}>
             <Text type="secondary" style={{ fontSize: 14 }}>
+              <a 
+                onClick={() => router.push('/forgot-password')}
+                style={{ color: '#667eea', fontWeight: 500, cursor: 'pointer' }}
+              >
+                Forgot your password?
+              </a>
+            </Text>
+            <Text type="secondary" style={{ fontSize: 14 }}>
               Don&apos;t have an account?{' '}
               <a href="#" style={{ color: '#667eea', fontWeight: 500 }}>
                 Contact support
