@@ -53,7 +53,7 @@ export const getAgentColumns = (
   {
     title: 'Parent Agent',
     key: 'parent_agent',
-    render: (_, record: Agent) => 
+    render: (_: any, record: Agent) => 
       record.parent_agent_name ? (
         <Tag color="cyan">{record.parent_agent_name}</Tag>
       ) : (
