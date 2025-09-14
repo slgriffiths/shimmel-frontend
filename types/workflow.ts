@@ -1,6 +1,7 @@
 import type { PagyResponse } from '@/hooks/usePagination';
 
 export interface Workflow {
+  total_runs: number;
   owner: {
     id: number;
     email: string;
