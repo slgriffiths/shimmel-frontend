@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Typography, Spin, Button, Card, Dropdown, Drawer, Tabs } from 'antd';
+import { Typography, Spin, Button, Card, Dropdown, Drawer, Tabs, Tag } from 'antd';
 import {
   SaveOutlined,
   MoreOutlined,
@@ -13,6 +13,7 @@ import {
 import type { MenuProps } from 'antd';
 import styles from './WorkflowDetail.module.scss';
 import { useWorkflow, TriggerType, ActionType } from '@/contexts/WorkflowContext';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
 import TriggerActionSelectionModal from './TriggerActionSelectionModal';
 import FormTriggerConfig from './FormTriggerConfig';
 import ActionConfig from './ActionConfig';
@@ -39,6 +40,7 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     updateAction,
   } = useWorkflow();
   const { workflow, loading, error, selectedStep, triggerTypes, actionTypes } = state;
+  const { configuration } = useConfiguration();
   const [selectionModal, setSelectionModal] = useState<{ open: boolean; mode: 'trigger' | 'action' }>({
     open: false,
     mode: 'trigger',
@@ -155,6 +157,9 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
     return a.position - b.position;
   });
 
+  // Check if user is super admin
+  const isSuperAdmin = configuration?.user?.data?.role === 'super';
+
   const workflowTabItems = [
     {
       key: 'workflow',
@@ -172,6 +177,13 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
               <Paragraph type='secondary' style={{ fontSize: '12px', margin: 0 }}>
                 Created on {new Date(workflow.created_at).toLocaleDateString()}
               </Paragraph>
+              {isSuperAdmin && (
+                <div style={{ marginTop: '8px' }}>
+                  <Tag color={workflow.account_id ? 'blue' : 'green'}>
+                    {workflow.account_name || workflow.account?.name || 'Global'}
+                  </Tag>
+                </div>
+              )}
             </div>
             <Button type='primary' icon={<SaveOutlined />} onClick={saveWorkflow} loading={loading}>
               Save Workflow

@@ -29,7 +29,7 @@ export default function SupportPage() {
       pagination.setLoading(true);
       const params = pagination.getQueryParams();
       const response = await SupportTicketService.getSupportTickets(params.page, params.limit);
-      
+
       setSupportTickets(response.support_tickets);
       pagination.updateFromResponse(response);
     } catch (error) {
@@ -48,7 +48,7 @@ export default function SupportPage() {
   };
 
   const handleCreateSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setCreateDrawerOpen(false);
   };
 
@@ -63,10 +63,14 @@ export default function SupportPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'blue';
-      case 'completed': return 'orange';
-      case 'closed': return 'green';
-      default: return 'default';
+      case 'open':
+        return 'blue';
+      case 'completed':
+        return 'orange';
+      case 'closed':
+        return 'green';
+      default:
+        return 'default';
     }
   };
 
@@ -76,9 +80,9 @@ export default function SupportPage() {
       dataIndex: 'title',
       key: 'title',
       render: (title: string, record: SupportTicket) => (
-        <Button 
-          type="link" 
-          onClick={() => handleViewTicket(record)} 
+        <Button
+          type='link'
+          onClick={() => handleViewTicket(record)}
           style={{ padding: 0, fontWeight: 'bold', textAlign: 'left' }}
         >
           {title}
@@ -91,9 +95,7 @@ export default function SupportPage() {
       key: 'status',
       width: 120,
       render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-        </Tag>
+        <Tag color={getStatusColor(status)}>{status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}</Tag>
       ),
     },
     {
@@ -108,20 +110,14 @@ export default function SupportPage() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 150,
-      render: (date: string) => (
-        <Text type="secondary">{formatTimeAgo(date)}</Text>
-      ),
+      render: (date: string) => <Text type='secondary'>{formatTimeAgo(date)}</Text>,
     },
     {
       title: 'Actions',
       key: 'actions',
       width: 80,
-      render: (_, record: SupportTicket) => (
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          onClick={() => handleViewTicket(record)}
-        />
+      render: (_: any, record: SupportTicket) => (
+        <Button type='text' icon={<EyeOutlined />} onClick={() => handleViewTicket(record)} />
       ),
     },
   ];
@@ -130,17 +126,14 @@ export default function SupportPage() {
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Title level={2} style={{ margin: 0 }}>Support Tickets</Title>
-          <Text type="secondary" style={{ fontSize: 16 }}>
+          <Title level={2} style={{ margin: 0 }}>
+            Support Tickets
+          </Title>
+          <Text type='secondary' style={{ fontSize: 16 }}>
             Get help from our support team
           </Text>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreateTicket}
-          size="large"
-        >
+        <Button type='primary' icon={<PlusOutlined />} onClick={handleCreateTicket} size='large'>
           Create Support Ticket
         </Button>
       </div>
@@ -148,11 +141,11 @@ export default function SupportPage() {
       <Table
         columns={columns}
         dataSource={supportTickets}
-        rowKey="id"
+        rowKey='id'
         loading={pagination.loading}
         onRow={(record) => ({
           onClick: () => handleViewTicket(record),
-          style: { cursor: 'pointer' }
+          style: { cursor: 'pointer' },
         })}
         pagination={{
           current: pagination.current,
@@ -167,20 +160,15 @@ export default function SupportPage() {
         locale={{
           emptyText: (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: 16 }}>
+              <Text type='secondary' style={{ fontSize: 16 }}>
                 No support tickets yet
               </Text>
               <br />
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />} 
-                onClick={handleCreateTicket}
-                style={{ marginTop: 16 }}
-              >
+              <Button type='primary' icon={<PlusOutlined />} onClick={handleCreateTicket} style={{ marginTop: 16 }}>
                 Create Your First Ticket
               </Button>
             </div>
-          )
+          ),
         }}
       />
 
@@ -190,11 +178,7 @@ export default function SupportPage() {
         onSuccess={handleCreateSuccess}
       />
 
-      <SupportTicketDetailsDrawer
-        open={detailsDrawerOpen}
-        onClose={handleCloseDetailsDrawer}
-        ticket={selectedTicket}
-      />
+      <SupportTicketDetailsDrawer open={detailsDrawerOpen} onClose={handleCloseDetailsDrawer} ticket={selectedTicket} />
     </div>
   );
 }

@@ -1,6 +1,13 @@
 import type { PagyResponse } from '@/hooks/usePagination';
 
 export interface Workflow {
+  owner: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  status: string;
   id: number;
   name: string;
   description?: string;
@@ -10,6 +17,12 @@ export interface Workflow {
   updated_at: string;
   triggers: any[];
   actions: any[];
+  account_id?: number;
+  account_name?: string;
+  account?: {
+    id: number;
+    name: string;
+  };
 }
 
 export type WorkflowsResponse = PagyResponse<Workflow> & {

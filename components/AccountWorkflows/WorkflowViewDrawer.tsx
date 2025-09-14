@@ -29,7 +29,7 @@ export default function WorkflowViewDrawer({ open, onClose, workflow }: Workflow
   const statusColors = {
     active: 'green',
     inactive: 'red',
-    draft: 'orange'
+    draft: 'orange',
   };
 
   return (
@@ -40,70 +40,57 @@ export default function WorkflowViewDrawer({ open, onClose, workflow }: Workflow
           <span>{workflow.name}</span>
         </Space>
       }
-      placement="right"
+      placement='right'
       onClose={onClose}
       open={open}
       width={600}
       extra={
         <Space>
-          <Button onClick={handleEditWorkflow}>
-            Edit
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={handleRunWorkflow}
-          >
+          <Button onClick={handleEditWorkflow}>Edit</Button>
+          <Button type='primary' icon={<PlayCircleOutlined />} onClick={handleRunWorkflow}>
             Run
           </Button>
         </Space>
       }
     >
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space direction='vertical' size='large' style={{ width: '100%' }}>
         <div>
           <Title level={4}>Workflow Information</Title>
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="Name">
-              {workflow.name}
-            </Descriptions.Item>
-            
-            <Descriptions.Item label="Description">
+            <Descriptions.Item label='Name'>{workflow.name}</Descriptions.Item>
+
+            <Descriptions.Item label='Description'>
               {workflow.description || <span style={{ color: '#999' }}>No description provided</span>}
             </Descriptions.Item>
-            
-            <Descriptions.Item label="Status">
-              <Tag color={statusColors[workflow.status]}>
+
+            <Descriptions.Item label='Status'>
+              <Tag color={statusColors[workflow.status as keyof typeof statusColors]}>
                 {workflow.status.charAt(0).toUpperCase() + workflow.status.slice(1)}
               </Tag>
             </Descriptions.Item>
-            
-            <Descriptions.Item label="Account">
+
+            <Descriptions.Item label='Account'>
               {workflow.account_name || `Account ${workflow.account_id}`}
             </Descriptions.Item>
-            
-            <Descriptions.Item label="Created By">
-              {workflow.created_by_user_name || 'Unknown'}
-            </Descriptions.Item>
+
+            <Descriptions.Item label='Created By'>{workflow.owner.email || 'Unknown'}</Descriptions.Item>
           </Descriptions>
         </div>
 
         <div>
           <Title level={4}>Execution Statistics</Title>
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="Total Runs">
+            <Descriptions.Item label='Total Runs'>
               <Space>
                 <PlayCircleOutlined />
                 {workflow.total_runs.toLocaleString()} runs
               </Space>
             </Descriptions.Item>
-            
-            <Descriptions.Item label="Last Run">
+
+            <Descriptions.Item label='Last Run'>
               <Space>
                 <ClockCircleOutlined />
-                {workflow.last_run_at 
-                  ? new Date(workflow.last_run_at).toLocaleString()
-                  : 'Never executed'
-                }
+                {workflow.last_ran_at ? new Date(workflow.last_ran_at).toLocaleString() : 'Never executed'}
               </Space>
             </Descriptions.Item>
           </Descriptions>
@@ -112,14 +99,14 @@ export default function WorkflowViewDrawer({ open, onClose, workflow }: Workflow
         <div>
           <Title level={4}>Timeline</Title>
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="Created">
+            <Descriptions.Item label='Created'>
               <Space>
                 <CalendarOutlined />
                 {new Date(workflow.created_at).toLocaleString()}
               </Space>
             </Descriptions.Item>
-            
-            <Descriptions.Item label="Last Updated">
+
+            <Descriptions.Item label='Last Updated'>
               <Space>
                 <CalendarOutlined />
                 {new Date(workflow.updated_at).toLocaleString()}

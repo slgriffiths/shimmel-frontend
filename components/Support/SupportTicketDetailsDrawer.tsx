@@ -95,7 +95,7 @@ export default function SupportTicketDetailsDrawer({
   };
 
   // Check if user is super admin
-  const isSuperAdmin = configuration?.user?.role === 'super';
+  const isSuperAdmin = configuration?.user?.data?.role === 'super';
 
   if (!ticket) return null;
 

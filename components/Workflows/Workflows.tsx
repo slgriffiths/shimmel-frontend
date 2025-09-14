@@ -7,10 +7,13 @@ import styles from './Workflows.module.scss';
 import { api } from '@/lib/api';
 import { WorkflowService } from '@/services/workflowService';
 import { usePagination } from '@/hooks/usePagination';
-import { workflowColumns } from './columns';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
+import { getWorkflowColumns } from './columns';
+import CloneWorkflowModal from './CloneWorkflowModal';
 import { generateWorkflowName } from '@/app/utils/animalNames';
 import { useRouter } from 'next/navigation';
 import type { Workflow } from '@/types/workflow';
+import { config } from 'process';
 
 const { Title } = Typography;
 
@@ -18,7 +21,10 @@ export default function Workflows() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [creating, setCreating] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [cloneModalOpen, setCloneModalOpen] = useState(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const pagination = usePagination({ initialPageSize: 20 });
+  const { configuration } = useConfiguration();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function Workflows() {
       pagination.setLoading(true);
       const params = pagination.getQueryParams();
       const response = await WorkflowService.getWorkflows(params.page, params.limit);
-      
+
       setWorkflows(response.workflows);
       pagination.updateFromResponse(response);
     } catch (err) {
@@ -42,28 +48,27 @@ export default function Workflows() {
   const handleCreateWorkflow = async () => {
     setCreating(true);
     const startTime = Date.now();
-    
+
     try {
       const workflowName = generateWorkflowName();
       const { data } = await api.post('/workflows', {
         workflow: {
           name: workflowName,
-          description: `A new workflow created automatically`
-        }
+          description: `A new workflow created automatically`,
+        },
       });
-      
+
       // Ensure minimum 3 second delay
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 3000 - elapsedTime);
-      
+
       setTimeout(() => {
         // Navigate to the new workflow detail page
         router.push(`/workflows/${data.id}`);
         antdMessage.success(`Created "${workflowName}" successfully!`);
         setCreating(false);
-        setRefreshTrigger(prev => prev + 1); // Refresh the list
+        setRefreshTrigger((prev) => prev + 1); // Refresh the list
       }, remainingTime);
-      
     } catch (err) {
       console.error('Failed to create workflow:', err);
       antdMessage.error('Error creating workflow.');
@@ -71,53 +76,68 @@ export default function Workflows() {
     }
   };
 
+  const handleCloneWorkflow = (workflow: Workflow) => {
+    setSelectedWorkflow(workflow);
+    setCloneModalOpen(true);
+  };
+
+  const handleCloneSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    setCloneModalOpen(false);
+    setSelectedWorkflow(null);
+  };
+
+  const handleCloseCloneModal = () => {
+    setCloneModalOpen(false);
+    setSelectedWorkflow(null);
+  };
+
+  // Check if user is super admin
+  const isSuperAdmin = configuration?.user?.data?.role === 'super';
+  console.log({ configuration });
+
   return (
     <div className={styles.workflows}>
       <div className={styles.header}>
         <Title level={2}>Workflows</Title>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={handleCreateWorkflow}
-          loading={creating}
-        >
+        <Button type='primary' icon={<PlusOutlined />} onClick={handleCreateWorkflow} loading={creating}>
           Create Workflow
         </Button>
       </div>
-      
+
       <Table
-        columns={workflowColumns}
+        columns={getWorkflowColumns(isSuperAdmin, handleCloneWorkflow)}
         dataSource={workflows}
         loading={pagination.loading}
-        rowKey="id"
+        rowKey='id'
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} of ${total} workflows`,
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} workflows`,
           onChange: pagination.setPage,
           onShowSizeChange: (current, size) => pagination.setPageSize(size),
         }}
         className={styles.workflowsTable}
       />
-      
-      <Modal
-        title="Creating Workflow"
-        open={creating}
-        footer={null}
-        closable={false}
-        centered
-      >
+
+      <Modal title='Creating Workflow' open={creating} footer={null} closable={false} centered>
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Spin size="large" />
+          <Spin size='large' />
           <p style={{ marginTop: '16px', marginBottom: '0' }}>
             We are creating your workflow. This may take a minute...
           </p>
         </div>
       </Modal>
+
+      <CloneWorkflowModal
+        open={cloneModalOpen}
+        onClose={handleCloseCloneModal}
+        onSuccess={handleCloneSuccess}
+        workflow={selectedWorkflow}
+      />
     </div>
   );
 }

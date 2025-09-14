@@ -39,4 +39,12 @@ export class WorkflowService {
     });
     return data;
   }
+
+  /**
+   * Clone a workflow to another account
+   */
+  static async cloneWorkflow(workflowId: number, payload: { target_account_id?: number }): Promise<Workflow> {
+    const { data } = await api.post(`/workflows/${workflowId}/clone`, payload);
+    return data;
+  }
 }

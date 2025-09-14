@@ -2,18 +2,12 @@ import { Button, Space, Tag, Tooltip } from 'antd';
 import { EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import type { Workflow } from '@/types/workflow';
 
-export const getWorkflowColumns = (
-  handleViewWorkflow: (workflow: Workflow) => void
-) => [
+export const getWorkflowColumns = (handleViewWorkflow: (workflow: Workflow) => void) => [
   {
     title: 'Name',
     key: 'name',
     render: (_, record: Workflow) => (
-      <Button 
-        type="link" 
-        onClick={() => handleViewWorkflow(record)} 
-        style={{ padding: 0, fontWeight: 'bold' }}
-      >
+      <Button type='link' onClick={() => handleViewWorkflow(record)} style={{ padding: 0, fontWeight: 'bold' }}>
         {record.name}
       </Button>
     ),
@@ -27,14 +21,14 @@ export const getWorkflowColumns = (
   {
     title: 'Status',
     key: 'status',
-    render: (_, record: Workflow) => {
-      const statusColors = {
+    render: (_: any, record: Workflow) => {
+      const statusColors: Record<'active' | 'inactive' | 'draft', string> = {
         active: 'green',
         inactive: 'red',
-        draft: 'orange'
+        draft: 'orange',
       };
       return (
-        <Tag color={statusColors[record.status]}>
+        <Tag color={statusColors[record.status as 'active' | 'inactive' | 'draft']}>
           {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
         </Tag>
       );
@@ -49,10 +43,10 @@ export const getWorkflowColumns = (
   },
   {
     title: 'Last Run',
-    dataIndex: 'last_run_at',
-    key: 'last_run_at',
+    dataIndex: 'last_ran_at',
+    key: 'last_ran_at',
     width: 140,
-    render: (date: string) => date ? new Date(date).toLocaleDateString() : 'Never',
+    render: (date: string) => (date ? new Date(date).toLocaleDateString() : 'Never'),
   },
   {
     title: 'Created By',
@@ -74,9 +68,9 @@ export const getWorkflowColumns = (
     width: 100,
     render: (_, record: Workflow) => (
       <Space>
-        <Tooltip title="View Workflow">
+        <Tooltip title='View Workflow'>
           <Button
-            type="text"
+            type='text'
             icon={<EyeOutlined />}
             onClick={(e) => {
               e.stopPropagation();
@@ -84,10 +78,10 @@ export const getWorkflowColumns = (
             }}
           />
         </Tooltip>
-        
-        <Tooltip title="Run Workflow">
+
+        <Tooltip title='Run Workflow'>
           <Button
-            type="text"
+            type='text'
             icon={<PlayCircleOutlined />}
             onClick={(e) => {
               e.stopPropagation();
