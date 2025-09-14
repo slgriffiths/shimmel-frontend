@@ -178,7 +178,7 @@ export default function SupportTicketDetailsDrawer({
                     {response.user.name}
                   </Text>
                   {response.user.is_admin && (
-                    <Tag color="blue" size="small">Admin</Tag>
+                    <Tag color="blue">Admin</Tag>
                   )}
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     <ClockCircleOutlined /> {formatTimeAgo(response.created_at)}

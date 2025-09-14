@@ -30,7 +30,7 @@ export const getAgentColumns = (
   {
     title: 'Account',
     key: 'account',
-    render: (_, record: Agent) => (
+    render: (_: any, record: Agent) => (
       <Tag color={record.account_id ? 'blue' : 'green'}>
         {record.account_id ? `Account ${record.account_id}` : 'Global'}
       </Tag>
@@ -64,7 +64,7 @@ export const getAgentColumns = (
     title: 'Actions',
     key: 'actions',
     width: 150,
-    render: (_, record: Agent) => (
+    render: (_: any, record: Agent) => (
       <Space>
         <Button
           type="text"

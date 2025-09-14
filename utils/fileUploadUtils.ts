@@ -123,7 +123,7 @@ export const generateFileId = (): string => {
 export const fileToUploadFile = (file: File): UploadFile => {
   const uploadFile = file as UploadFile;
   uploadFile.uid = generateFileId();
-  uploadFile.status = 'pending';
+  uploadFile.status = 'uploading';
   uploadFile.percent = 0;
   return uploadFile;
 };

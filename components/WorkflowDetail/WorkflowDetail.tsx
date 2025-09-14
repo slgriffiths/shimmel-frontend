@@ -179,8 +179,8 @@ export default function WorkflowDetail({ workflowId }: WorkflowDetailProps) {
               </Paragraph>
               {isSuperAdmin && (
                 <div style={{ marginTop: '8px' }}>
-                  <Tag color={workflow.account_id ? 'blue' : 'green'}>
-                    {workflow.account_name || workflow.account?.name || 'Global'}
+                  <Tag color="blue">
+                    Account Workflow
                   </Tag>
                 </div>
               )}

@@ -13,7 +13,7 @@ export const getUserColumns = (
   {
     title: 'Name',
     key: 'name',
-    render: (_, record: User) => (
+    render: (_: any, record: User) => (
       <Button 
         type="link" 
         onClick={() => handleViewUser(record)} 
@@ -31,7 +31,7 @@ export const getUserColumns = (
   {
     title: 'Role',
     key: 'role',
-    render: (_, record: User) => (
+    render: (_: any, record: User) => (
       <Tag color={record.role === 'admin' ? 'gold' : 'blue'}>
         {record.role === 'admin' ? 'Account Admin' : 'User'}
       </Tag>
@@ -40,7 +40,7 @@ export const getUserColumns = (
   {
     title: 'Status',
     key: 'status',
-    render: (_, record: User) => (
+    render: (_: any, record: User) => (
       <Tag color={record.disabled_at ? 'red' : 'green'}>
         {record.disabled_at ? 'Disabled' : 'Active'}
       </Tag>
@@ -49,7 +49,7 @@ export const getUserColumns = (
   {
     title: 'Invitation',
     key: 'invitation_status',
-    render: (_, record: User) => {
+    render: (_: any, record: User) => {
       if (record.invitation_accepted_at) {
         return (
           <Tooltip title={`Invite accepted ${formatTimeAgo(record.invitation_accepted_at)}`}>
@@ -96,7 +96,7 @@ export const getUserColumns = (
     title: 'Actions',
     key: 'actions',
     width: 150,
-    render: (_, record: User) => (
+    render: (_: any, record: User) => (
       <Space>
         <Tooltip title="View User">
           <Button

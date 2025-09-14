@@ -106,7 +106,7 @@ export default function CloneWorkflowModal({ open, onClose, onSuccess, workflow 
             allowClear
             showSearch
             filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
           >
             {(accounts || []).map(account => (

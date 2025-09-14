@@ -2,12 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import { Upload, message, Progress } from 'antd';
+import type { UploadFile } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import { FileUploadService } from '@/services/fileUploadService';
 import { validateFile, fileToUploadFile, isUploadComplete, getUploadedFiles } from '@/utils/fileUploadUtils';
 import { generateUploadSessionId } from '@/utils/uploadSession';
 import { ALLOWED_FILE_TYPES_ARRAY } from '@/constants/fileUpload';
-import type { UploadFile, FileUploadResponse } from '@/types/fileUpload';
+import type { FileUploadResponse } from '@/types/fileUpload';
 
 const { Dragger } = Upload;
 
@@ -87,7 +88,7 @@ export default function MultiFileUpload({
     if (isUploadComplete(newFileList) && onFilesUploaded) {
       const uploadedFiles = getUploadedFiles(newFileList)
         .map(file => file.response?.file_info)
-        .filter(Boolean);
+        .filter(Boolean) as Array<{ id: string; filename: string; content_type: string; byte_size: number; human_size: string; checksum: string; created_at: string; }>;
       
       if (uploadedFiles.length > 0) {
         onFilesUploaded(uploadedFiles);

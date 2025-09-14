@@ -107,7 +107,7 @@ export default function CloneAgentModal({ open, onClose, onSuccess, agent }: Clo
             allowClear
             showSearch
             filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
           >
             {(accounts || []).map(account => (

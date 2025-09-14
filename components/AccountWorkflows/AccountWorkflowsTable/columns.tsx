@@ -6,7 +6,7 @@ export const getWorkflowColumns = (handleViewWorkflow: (workflow: Workflow) => v
   {
     title: 'Name',
     key: 'name',
-    render: (_, record: Workflow) => (
+    render: (_: any, record: Workflow) => (
       <Button type='link' onClick={() => handleViewWorkflow(record)} style={{ padding: 0, fontWeight: 'bold' }}>
         {record.name}
       </Button>
@@ -66,7 +66,7 @@ export const getWorkflowColumns = (handleViewWorkflow: (workflow: Workflow) => v
     title: 'Actions',
     key: 'actions',
     width: 100,
-    render: (_, record: Workflow) => (
+    render: (_: any, record: Workflow) => (
       <Space>
         <Tooltip title='View Workflow'>
           <Button
