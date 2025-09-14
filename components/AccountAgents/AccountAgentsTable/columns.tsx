@@ -8,7 +8,7 @@ export const getAgentColumns = (
   {
     title: 'Name',
     key: 'name',
-    render: (_, record: Agent) => (
+    render: (_: any, record: Agent) => (
       <Button 
         type="link" 
         onClick={() => handleViewAgent(record)} 
@@ -27,7 +27,7 @@ export const getAgentColumns = (
   {
     title: 'Account',
     key: 'account',
-    render: (_, record: Agent) => (
+    render: (_: any, record: Agent) => (
       <Tag color={record.account_id ? 'blue' : 'green'}>
         {record.account_name || (record.account_id ? `Account ${record.account_id}` : 'Global')}
       </Tag>
@@ -71,7 +71,7 @@ export const getAgentColumns = (
     title: 'Actions',
     key: 'actions',
     width: 80,
-    render: (_, record: Agent) => (
+    render: (_: any, record: Agent) => (
       <Space>
         <Tooltip title="View Agent">
           <Button

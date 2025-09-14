@@ -21,6 +21,16 @@ export class WorkflowService {
   }
 
   /**
+   * Get paginated list of all workflows
+   */
+  static async getWorkflows(page = 1, limit = 20): Promise<WorkflowsResponse> {
+    const { data } = await api.get('/workflows', {
+      params: { page, limit }
+    });
+    return data;
+  }
+
+  /**
    * Get recent workflows for dashboard
    */
   static async getRecentWorkflows(page = 1, limit = 5): Promise<WorkflowsResponse> {

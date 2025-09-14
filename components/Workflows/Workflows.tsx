@@ -5,42 +5,39 @@ import { Table, Typography, message as antdMessage, Button, Modal, Spin } from '
 import { PlusOutlined } from '@ant-design/icons';
 import styles from './Workflows.module.scss';
 import { api } from '@/lib/api';
+import { WorkflowService } from '@/services/workflowService';
+import { usePagination } from '@/hooks/usePagination';
 import { workflowColumns } from './columns';
 import { generateWorkflowName } from '@/app/utils/animalNames';
 import { useRouter } from 'next/navigation';
+import type { Workflow } from '@/types/workflow';
 
 const { Title } = Typography;
 
-interface Workflow {
-  id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  steps_count?: number;
-  status?: string;
-}
-
 export default function Workflows() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const pagination = usePagination({ initialPageSize: 20 });
   const router = useRouter();
 
   useEffect(() => {
-    const fetchWorkflows = async () => {
-      try {
-        const { data } = await api.get('/workflows');
-        setWorkflows(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Failed to load workflows:', err);
-        antdMessage.error('Error loading workflows.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchWorkflows();
-  }, []);
+  }, [pagination.current, pagination.pageSize, refreshTrigger]);
+
+  const fetchWorkflows = async () => {
+    try {
+      pagination.setLoading(true);
+      const params = pagination.getQueryParams();
+      const response = await WorkflowService.getWorkflows(params.page, params.limit);
+      
+      setWorkflows(response.workflows);
+      pagination.updateFromResponse(response);
+    } catch (err) {
+      console.error('Failed to load workflows:', err);
+      antdMessage.error('Error loading workflows.');
+    }
+  };
 
   const handleCreateWorkflow = async () => {
     setCreating(true);
@@ -64,6 +61,7 @@ export default function Workflows() {
         router.push(`/workflows/${data.id}`);
         antdMessage.success(`Created "${workflowName}" successfully!`);
         setCreating(false);
+        setRefreshTrigger(prev => prev + 1); // Refresh the list
       }, remainingTime);
       
     } catch (err) {
@@ -90,14 +88,18 @@ export default function Workflows() {
       <Table
         columns={workflowColumns}
         dataSource={workflows}
-        loading={loading}
+        loading={pagination.loading}
         rowKey="id"
         pagination={{
-          pageSize: 20,
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total, range) =>
             `${range[0]}-${range[1]} of ${total} workflows`,
+          onChange: pagination.setPage,
+          onShowSizeChange: (current, size) => pagination.setPageSize(size),
         }}
         className={styles.workflowsTable}
       />
