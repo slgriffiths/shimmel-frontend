@@ -19,4 +19,14 @@ export class WorkflowService {
     const { data } = await api.get(`/workflows/${workflowId}`);
     return data;
   }
+
+  /**
+   * Get recent workflows for dashboard
+   */
+  static async getRecentWorkflows(page = 1, limit = 5): Promise<WorkflowsResponse> {
+    const { data } = await api.get('/workflows', {
+      params: { page, limit }
+    });
+    return data;
+  }
 }
